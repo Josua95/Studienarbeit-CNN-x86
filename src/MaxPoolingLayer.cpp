@@ -7,6 +7,7 @@
 
 #include "MaxPoolingLayer.hpp"
 #include "ConvLayer.hpp"
+#include "Mathematics.hpp"
 #include <iostream>
 #include <limits>
 

@@ -25,11 +25,11 @@ int main(int argc, char **argv) {
 	Input_Layer *inputlayer = new Input_Layer(28,28);
 	layer1.input_layer = inputlayer;
 	Layer layer2;
-	layer2.conv_layer = new Conv_Layer(5,5,1,60);
+	layer2.conv_layer = new Conv_Layer(5,5,1,6);
 	Layer layer3;
 	layer3.max_pooling_layer = new MaxPooling_Layer(2,2);
 	Layer layer4;
-	layer4.conv_layer = new Conv_Layer(5,5,1,80);
+	layer4.conv_layer = new Conv_Layer(5,5,1,16);
 	Layer layer5;
 	layer5.max_pooling_layer = new MaxPooling_Layer(2,2);
 	Layer layer6;

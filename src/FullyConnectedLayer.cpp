@@ -6,9 +6,7 @@
  */
 
 #include "FullyConnectedLayer.hpp"
-#include "MaxPoolingLayer.hpp"
-#include "ConvLayer.hpp"
-#include "InputLayer.hpp"
+#include "Mathematics.hpp"
 
 FullyConnected_Layer::FullyConnected_Layer(int size){
 	this->size=size;
@@ -29,11 +27,14 @@ bool FullyConnected_Layer::generate(Tensor *pre_tensor){
 	int weight_size = pre_tensor->getX()*pre_tensor->getY()*pre_tensor->getZ();
 	node = new Tensor(size,1);
 	weight = new Tensor(size, weight_size);
+	mathematics::set_tensor(weight, 0.5);
 	bias = new Tensor(size, weight_size);
+	mathematics::set_tensor(bias, 0.5);
 	return true;
 }
 bool FullyConnected_Layer::forward(Tensor *pre_tensor){
 
+	mathematics::set_tensor(node, 0.5);
 	#pragma omp parallel for
 	for(int z_pos = 0; z_pos < pre_tensor->getZ(); z_pos++)
 	{
@@ -43,6 +44,8 @@ bool FullyConnected_Layer::forward(Tensor *pre_tensor){
 			{
 				for(int node_index = 0; node_index < node->getX(); node_index++){
 					node->getArray(1,1)[node_index]+=pre_tensor->getArray(z_pos,y_pos)[x_pos]*weight->getArray(0,x_pos*y_pos*z_pos)[node_index]+bias->getArray(0,x_pos*y_pos*z_pos)[node_index];
+					//Sigmoid
+					node->getArray(1,1)[node_index] = mathematics::sigmoid_once(node->getArray(1,1)[node_index]);
 				}
 			}
 		}
