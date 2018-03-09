@@ -22,6 +22,7 @@ public:
 	int getZ();
 	float *getArray(int z);
 	float *getArray(int z, int y);
+	float *getArray();
 };
 
 #endif /* TENSOR_HPP_ */

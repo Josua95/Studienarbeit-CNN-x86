@@ -16,6 +16,8 @@
  *
  */
 Input_Layer::Input_Layer(int x, int y){
+	this->x=x;
+	this->y=y;
 	node=new Tensor(x, y);
 }
 
@@ -24,4 +26,14 @@ Input_Layer::~Input_Layer() {
 }
 Tensor *Input_Layer::getNode(){
 	return node;
+}
+
+bool Input_Layer::forward(float *picture){
+	#pragma omp parallel for
+	for(int pos_y=0; pos_y<y; pos_y++){
+		for(int pos_x=0;pos_x<x;pos_x++){
+			node->getArray(0,pos_y)[pos_x]=picture[pos_y*x+pos_x];
+		}
+	}
+	return true;
 }

@@ -7,7 +7,6 @@
 
 #include "ConvLayer.hpp"
 #include <iostream>
-#include <immintrin.h>
 
 /**
  * The constructor of a convolutional layer needs the specification of
@@ -87,6 +86,7 @@ bool Conv_Layer::forward(Tensor *pre_tensor){
 	int pre_z_size = pre_tensor->getZ();
 
 	//Alle Feature_maps des vorherigen Layers
+	#pragma omp parallel for
 	for(int pre_feature=0; pre_feature < pre_z_size; pre_feature++){
 		//jedes Element der Matrix von Input Layer durchlaufen
 		for(int y_pos = 0; y_pos < pre_y_size; y_pos++){
@@ -130,11 +130,4 @@ bool Conv_Layer::forward(Tensor *pre_tensor){
 
 bool Conv_Layer::backward(Tensor *pre_tensor){
 	return true;
-}
-
-float *mul_float8(float node, float *weight){
-	__m256 ymm0 = _mm256_set_ps(node,node,node,node,node,node,node,node);
-	__m256 ymm1 = _mm256_load_ps(weight);
-	__m256 result = _mm256_mul_ps(ymm0, ymm1);
-	return (float*)&result;
 }

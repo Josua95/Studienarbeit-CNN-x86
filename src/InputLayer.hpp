@@ -12,12 +12,16 @@
 
 class Input_Layer{
 private:
+	int x;
+	int y;
 	Tensor *node;
 
 public:
 	Input_Layer(int x, int y);
 	virtual ~Input_Layer();
 	Tensor *getNode();
+
+	bool forward(float *picture);
 };
 
 #endif /* INPUTLAYER_HPP_ */

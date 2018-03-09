@@ -45,6 +45,10 @@ float *MaxPooling_Layer::getNode(int feature_map){
 	return new float;
 }
 
+Tensor *MaxPooling_Layer::getNodeTensor(){
+	return node;
+}
+
 bool MaxPooling_Layer::generate(Conv_Layer *pre_layer){
 	int prev_dim_x = pre_layer->getNodeTensor()->getX();
 	int prev_dim_y = pre_layer->getNodeTensor()->getY();
@@ -66,6 +70,7 @@ bool MaxPooling_Layer::forward(Tensor *pre_tensor){
 	float new_node = 0.0f;
 
 	//Alle Feature-Maps durchgehen
+	#pragma omp parallel for
 	for(int feature_map = 0; feature_map < conv_z_size; feature_map++){
 		//immer links oben von pooling-Flaeche
 		for(int y_pos = 0; y_pos < conv_y_size; y_pos=y_pos+y_step_size){

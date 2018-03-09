@@ -40,3 +40,7 @@ float *Tensor::getArray(int z, int y){
 float *Tensor::getArray(int z){
 	return array+z*y*x;
 }
+
+float *Tensor::getArray(){
+	return array;
+}
