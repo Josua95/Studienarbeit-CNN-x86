@@ -67,10 +67,9 @@ int main(int argc, char **argv) {
 
 	}
 
-	//Forward
 	PictureContainer *train_picture_container = new PictureContainer("./train", 1);
 
-	for(int i=0; i<1000; i++){
+	for(int i=0; i<999; i++){
 		Picture *picture = train_picture_container->get_nextpicture();
 
 		for(unsigned int layer_index=0;layer_index<layers->size(); layer_index++){
@@ -96,12 +95,11 @@ int main(int argc, char **argv) {
 			default: break;
 			}
 		}
-		std::cout << "Forward" << i << std::endl;
-
+		float *output=layers->at(5)->fully_connected_layer->getNode()->getArray();
+		std::cout << "Forward " << i << " " << output[0] << " " << output[1] << " " << output[2] << " " << output[3] << " " << output[4] << " " << output[5] << " " << output[6] << " " << output[7] << " " << output[8] << " " << output[9] << std::endl;
 	}
 
 
 }
-
 
 

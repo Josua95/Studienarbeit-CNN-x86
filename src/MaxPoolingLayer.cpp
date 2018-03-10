@@ -16,6 +16,7 @@ MaxPooling_Layer::MaxPooling_Layer(int x_receptive, int y_receptive){
 	this->y_receptive = y_receptive;
 	no_feature_maps = 0;
 	node = NULL;
+	node_deriv = NULL;
 
 }
 
@@ -59,6 +60,7 @@ bool MaxPooling_Layer::generate(Conv_Layer *pre_layer){
 	int y_size = (prev_dim_y / getYReceptive());
 
 	node = new Tensor(x_size, y_size, prev_dim_z);
+	node_deriv = new Tensor(x_size, y_size, prev_dim_z);
 	return true;
 }
 bool MaxPooling_Layer::forward(Tensor *pre_tensor){

@@ -18,8 +18,11 @@ private:
 	int step_size;
 	int no_feature_maps;
 	Tensor *node;
+	Tensor *node_deriv;
 	Tensor *bias;
+	Tensor *bias_deriv;
 	Tensor *weight;
+	Tensor *weight_deriv;
 public:
 	Conv_Layer(int x_receptive, int y_receptive, int step_size, int no_feature_maps);
 	virtual ~Conv_Layer();

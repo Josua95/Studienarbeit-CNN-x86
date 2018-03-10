@@ -87,7 +87,6 @@ void get_cost_derivatives(float *output, float *labels, float *derivatives, int 
 void set_tensor(Tensor *tensor, int value){
 	#pragma omp parallel for
 	for(int z_pos=0; z_pos < tensor->getZ(); z_pos++){
-		//jedes Element der Matrix von Input Layer durchlaufen
 		for(int y_pos = 0; y_pos < tensor->getY(); y_pos++){
 			for(int x_pos = 0; x_pos < tensor->getX();x_pos++){
 				tensor->getArray(z_pos, y_pos)[x_pos]= value;

@@ -14,12 +14,16 @@ class FullyConnected_Layer{
 private:
 	int size;
 	Tensor *node;
+	Tensor *node_deriv;
 	Tensor *bias;
+	Tensor *bias_deriv;
 	Tensor *weight;
+	Tensor *weight_deriv;
 public:
 	FullyConnected_Layer(int size);
 	virtual ~FullyConnected_Layer();
 	int getSize();
+	Tensor *getNode();
 
 	bool generate(Tensor *pre_tensor);
 	bool forward(Tensor *pre_tensor);

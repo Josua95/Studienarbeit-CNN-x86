@@ -17,6 +17,7 @@ private:
 	int y_receptive;
 	int no_feature_maps;
 	Tensor *node;
+	Tensor *node_deriv;
 public:
 	MaxPooling_Layer(int x_receptive, int y_receptive);
 	virtual ~MaxPooling_Layer();

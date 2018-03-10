@@ -23,8 +23,11 @@ Conv_Layer::Conv_Layer(int x_receptive, int y_receptive, int step_size, int no_f
 	this->y_receptive = y_receptive;
 	this->no_feature_maps = no_feature_maps;
 	weight=NULL;
+	weight_deriv=NULL;
 	bias=NULL;
+	bias_deriv=NULL;
 	node=NULL;
+	node_deriv=NULL;
 }
 
 Conv_Layer::~Conv_Layer() {
@@ -76,9 +79,14 @@ bool Conv_Layer::generate(Tensor *pre_tensor){
 
 	weight = new Tensor(getXReceptive(), getYReceptive(), getNoFeatureMaps());
 	mathematics::set_tensor(weight, 0.5);
+	weight_deriv = new Tensor(getXReceptive(), getYReceptive(), getNoFeatureMaps());
+	mathematics::set_tensor(weight_deriv, 0.5);
 	bias = new Tensor(getXReceptive(), getYReceptive(), getNoFeatureMaps());
-	mathematics::set_tensor(weight, 0.5);
+	mathematics::set_tensor(bias, 0.5);
+	bias_deriv = new Tensor(getXReceptive(), getYReceptive(), getNoFeatureMaps());
+	mathematics::set_tensor(bias_deriv, 0.5);
 	node = new Tensor(x_size, y_size, pre_z_size*getNoFeatureMaps());
+	node_deriv = new Tensor(x_size, y_size, pre_z_size*getNoFeatureMaps());
 	return true;
 }
 
@@ -87,7 +95,7 @@ bool Conv_Layer::forward(Tensor *pre_tensor){
 	int pre_y_size = pre_tensor->getY();
 	int pre_z_size = pre_tensor->getZ();
 	//Alle Nodes auf 0 setzen
-	mathematics::set_tensor(node, 0);
+	mathematics::set_tensor(node, 0.0);
 
 	//Alle Feature_maps des vorherigen Layers
 	#pragma omp parallel for
