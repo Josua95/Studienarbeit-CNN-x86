@@ -11,6 +11,7 @@
 #include "MaxPoolingLayer.hpp"
 #include "FullyConnectedLayer.hpp"
 #include "PictureContainer.hpp"
+#include "Mathematics.hpp"
 
 union Layer{
 	Input_Layer *input_layer;
@@ -20,6 +21,9 @@ union Layer{
 };
 
 int main(int argc, char **argv) {
+	//seed for random number
+	srand (static_cast <unsigned> (time(0)));
+
 	std::vector<Layer*> *layers = new std::vector<Layer*>;
 	Layer layer1;
 	Input_Layer *inputlayer = new Input_Layer(28,28);
@@ -76,12 +80,16 @@ int main(int argc, char **argv) {
 			switch(layer_index){
 			case 0:
 				layers->at(layer_index)->input_layer->forward(picture->get_input());
+				//mathematics::printTensor(layers->at(layer_index)->input_layer->getNode());
 				break;
 			case 1:
 				layers->at(layer_index)->conv_layer->forward(layers->at(layer_index-1)->input_layer->getNode());
+				//mathematics::printTensor(layers->at(layer_index)->conv_layer->getNodeTensor());
+				//mathematics::printTensor(layers->at(layer_index)->conv_layer->getWeightTensor());
 				break;
 			case 2:
 				layers->at(layer_index)->max_pooling_layer->forward(layers->at(layer_index-1)->conv_layer->getNodeTensor());
+				//mathematics::printTensor(layers->at(layer_index)->max_pooling_layer->getNodeTensor());
 				break;
 			case 3:
 				layers->at(layer_index)->conv_layer->forward(layers->at(layer_index-1)->max_pooling_layer->getNodeTensor());

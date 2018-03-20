@@ -14,6 +14,7 @@ class FullyConnected_Layer{
 private:
 	int size;
 	Tensor *node;
+	Tensor *node_z;
 	Tensor *node_deriv;
 	Tensor *bias;
 	Tensor *bias_deriv;
@@ -27,7 +28,7 @@ public:
 
 	bool generate(Tensor *pre_tensor);
 	bool forward(Tensor *pre_tensor);
-	bool backward(Tensor *pre_tensor);
+	bool backward(Tensor *post_deriv_weight, Tensor *post_deriv_bias);
 
 };
 

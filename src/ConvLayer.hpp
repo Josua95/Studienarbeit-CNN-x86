@@ -32,13 +32,14 @@ public:
 	int  getNoFeatureMaps();
 
 	Tensor *getNodeTensor();
+	Tensor *getWeightTensor();
 	float *getNode(int feature_map);
 	float *getBias(int feature_map);
 	float *getWeight(int feature_map);
 
 	bool generate(Tensor *pre_tensor);
 	bool forward(Tensor *pre_tensor);
-	bool backward(Tensor *pre_tensor);
+	bool backward(Tensor *post_tensor);
 
 };
 

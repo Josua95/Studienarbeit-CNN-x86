@@ -57,6 +57,10 @@ Tensor *Conv_Layer::getNodeTensor(){
 	return node;
 }
 
+Tensor *Conv_Layer::getWeightTensor(){
+	return weight;
+}
+
 float *Conv_Layer::getBias(int feature_map){
 	return bias->getArray(feature_map);
 }
@@ -78,13 +82,13 @@ bool Conv_Layer::generate(Tensor *pre_tensor){
 	int y_size = (pre_y_size - getYReceptive() + 1) / getStepSize();
 
 	weight = new Tensor(getXReceptive(), getYReceptive(), getNoFeatureMaps());
-	mathematics::set_tensor(weight, 0.5);
+	mathematics::set_tensor_random(weight);
 	weight_deriv = new Tensor(getXReceptive(), getYReceptive(), getNoFeatureMaps());
-	mathematics::set_tensor(weight_deriv, 0.5);
-	bias = new Tensor(getXReceptive(), getYReceptive(), getNoFeatureMaps());
-	mathematics::set_tensor(bias, 0.5);
+	mathematics::set_tensor_random(weight_deriv);
+	bias = new Tensor(1,1, getNoFeatureMaps());
+	mathematics::set_tensor_random(bias);
 	bias_deriv = new Tensor(getXReceptive(), getYReceptive(), getNoFeatureMaps());
-	mathematics::set_tensor(bias_deriv, 0.5);
+	mathematics::set_tensor_random(bias_deriv);
 	node = new Tensor(x_size, y_size, pre_z_size*getNoFeatureMaps());
 	node_deriv = new Tensor(x_size, y_size, pre_z_size*getNoFeatureMaps());
 	return true;
@@ -97,8 +101,8 @@ bool Conv_Layer::forward(Tensor *pre_tensor){
 	//Alle Nodes auf 0 setzen
 	mathematics::set_tensor(node, 0.0);
 
-	//Alle Feature_maps des vorherigen Layers
-	#pragma omp parallel for
+	//Alle Elemente des vorherigen Layers
+	#pragma omp for
 	for(int pre_z_pos=0; pre_z_pos < pre_z_size; pre_z_pos++){
 		//jedes Element der Matrix von Input Layer durchlaufen
 		for(int pre_y_pos = 0; pre_y_pos < pre_y_size; pre_y_pos++){
@@ -115,12 +119,12 @@ bool Conv_Layer::forward(Tensor *pre_tensor){
 				if(pre_y_pos < y_receptive-1) stop_y_rec = pre_y_pos;
 				else if(pre_y_pos > pre_y_size-y_receptive) start_y_rec = y_receptive + pre_y_pos - pre_y_size;
 
-				//Ueber Gewichte iterieren und in float-Array speichern
-				for(int z_pos=0;z_pos < node->getZ();z_pos++){
+				//über verschiedene Features
+				for(int z_pos=0;z_pos < no_feature_maps;z_pos++){
 					//Ueber Gewichte iterieren und in float-Array speichern
 					for(int y_rec = start_y_rec; y_rec <= stop_y_rec ; y_rec++){
 						for(int x_rec = start_x_rec; x_rec <= stop_x_rec ; x_rec++){
-							node->getArray(z_pos, pre_y_pos-y_rec)[pre_x_pos-x_rec] += pre_tensor->getArray(pre_z_pos,pre_y_pos)[pre_x_pos]*getWeight(z_pos%no_feature_maps)[y_rec*y_receptive+x_rec];
+							node->getArray(pre_z_pos*no_feature_maps+z_pos, pre_y_pos-y_rec)[pre_x_pos-x_rec] += pre_tensor->getArray(pre_z_pos,pre_y_pos)[pre_x_pos]*weight->getArray(z_pos,y_rec)[x_rec];
 						}
 					}
 				}
@@ -132,8 +136,8 @@ bool Conv_Layer::forward(Tensor *pre_tensor){
 		for(int y_pos = 0; y_pos < node->getY(); y_pos++){
 			for(int x_pos = 0; x_pos < node->getX();x_pos++){
 				for(int feature_map=0;feature_map<getNoFeatureMaps();feature_map++){
-					node->getArray(feature_map*pre_feature, y_pos)[x_pos] += getBias(feature_map)[y_pos*node->getY()+x_pos];
-					node->getArray(feature_map*pre_feature, y_pos)[x_pos] = mathematics::sigmoid_once(node->getArray(feature_map*pre_feature, y_pos)[x_pos]);
+					node->getArray(pre_feature*no_feature_maps+feature_map, y_pos)[x_pos] += bias->getArray(0, 0)[feature_map];
+					node->getArray(pre_feature*no_feature_maps+feature_map, y_pos)[x_pos] = mathematics::sigmoid_once(node->getArray(pre_feature*no_feature_maps+feature_map, y_pos)[x_pos]);
 				}
 			}
 		}
@@ -141,6 +145,7 @@ bool Conv_Layer::forward(Tensor *pre_tensor){
 	return true;
 }
 
-bool Conv_Layer::backward(Tensor *pre_tensor){
+bool Conv_Layer::backward(Tensor *post_tensor){
+
 	return true;
 }

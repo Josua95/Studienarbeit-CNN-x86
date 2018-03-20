@@ -25,7 +25,9 @@ float cross_entropy(float *calculated, float *expected, int size);
 float get_cost(float *output, float *labels, int size);
 void get_cost_derivatives(float *output, float *labels, float *derivatives, int size);
 
-void set_tensor(Tensor *tensor, int value);
+void set_tensor(Tensor *tensor, float value);
+void set_tensor_random(Tensor *tensor);
+void printTensor(Tensor *tensor);
 }
 
 

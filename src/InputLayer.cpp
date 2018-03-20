@@ -29,7 +29,7 @@ Tensor *Input_Layer::getNode(){
 }
 
 bool Input_Layer::forward(float *picture){
-	#pragma omp parallel for
+	#pragma omp for
 	for(int pos_y=0; pos_y<y; pos_y++){
 		for(int pos_x=0;pos_x<x;pos_x++){
 			node->getArray(0,pos_y)[pos_x]=picture[pos_y*x+pos_x];

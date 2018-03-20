@@ -17,6 +17,7 @@ private:
 	int y_receptive;
 	int no_feature_maps;
 	Tensor *node;
+	Tensor *node_z;
 	Tensor *node_deriv;
 public:
 	MaxPooling_Layer(int x_receptive, int y_receptive);
@@ -29,8 +30,8 @@ public:
 	float *getNode(int feature_map);
 
 	bool generate(Conv_Layer *pre_layer);
-	bool forward(Tensor *pre_tensor);
-	bool backward(Tensor *pre_tensor);
+	bool forward(Tensor *pre_tensor, Tensor *pre_tensor_z);
+	bool backward(Tensor *post_deriv_weight, Tensor *post_deriv_bias);
 
 };
 
