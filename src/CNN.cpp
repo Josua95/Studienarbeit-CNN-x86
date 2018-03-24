@@ -105,6 +105,10 @@ int main(int argc, char **argv) {
 		}
 		float *output=layers->at(5)->fully_connected_layer->getNode()->getArray();
 		std::cout << "Forward " << i << " " << output[0] << " " << output[1] << " " << output[2] << " " << output[3] << " " << output[4] << " " << output[5] << " " << output[6] << " " << output[7] << " " << output[8] << " " << output[9] << std::endl;
+
+		if(i%10 == 9){
+
+		}
 	}
 
 

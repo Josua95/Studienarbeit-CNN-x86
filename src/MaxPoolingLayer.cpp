@@ -16,7 +16,6 @@ MaxPooling_Layer::MaxPooling_Layer(int x_receptive, int y_receptive){
 	this->y_receptive = y_receptive;
 	no_feature_maps = 0;
 	node = NULL;
-	node_z = NULL;
 	node_deriv = NULL;
 
 }
@@ -64,7 +63,7 @@ bool MaxPooling_Layer::generate(Conv_Layer *pre_layer){
 	node_deriv = new Tensor(x_size, y_size, prev_dim_z);
 	return true;
 }
-bool MaxPooling_Layer::forward(Tensor *pre_tensor, Tensor *pre_tensor_z){
+bool MaxPooling_Layer::forward(Tensor *pre_tensor){
 	int conv_x_size = pre_tensor->getX();
 	int conv_y_size = pre_tensor->getY();
 	int conv_z_size = pre_tensor->getZ();
@@ -96,27 +95,34 @@ bool MaxPooling_Layer::forward(Tensor *pre_tensor, Tensor *pre_tensor_z){
 	}
 	return true;
 }
-bool MaxPooling_Layer::backward(Tensor *post_weight, Tensor *post_deriv_bias){
-	//größe von post_deriv_weight und post_deric_bias gleich
-	for(int z_pos=0; z_pos < post_weight->getZ(); z_pos++){
-		for(int y_pos=0; y_pos < post_weight->getY(); y_pos++){
-			for(int x_pos=0; x_pos < post_weight->getX(); x_pos++){
-				//w*b
-				node_deriv->getArray(z_pos, y_pos)[x_pos%node_deriv->getX()] += post_weight->getArray(z_pos, y_pos)[x_pos]*post_deriv_bias->getArray(z_pos, y_pos)[x_pos];
+bool MaxPooling_Layer::backward(Tensor *pre_node_deriv, Tensor *pre_node){
+
+	int step = pre_node->getX() - node->getX() + 1;
+
+	//Ueber alle Feature Maps des vorherigen Layers gehen
+	for (int z_pos = 0; z_pos < pre_node->getZ(); z_pos++){
+		//Ueber Anfangselement von jedem Pooling-Rechteck iterieren
+		for (int y_pos = 0; y_pos < pre_node->getY()-step; y_pos = y_pos++){
+			for (int x_pos = 0; x_pos < pre_node->getX()-step; x_pos = x_pos++){
+
+				int max_node_index_x = 0;
+				int max_node_index_y = 0;
+				float max_node_value = - std::numeric_limits<float>::max();
+
+				//benachbarte Elemente durchgehen und max ermitteln
+				for (int l = 0; l < step; l++){
+					for (int m = 0; m < step; m++){
+						if (max_node_value < pre_node->getArray(z_pos,y_pos+l)[x_pos+m]){
+							max_node_value = pre_node->getArray(z_pos,y_pos+l)[x_pos+m];
+							max_node_index_x = m;
+							max_node_index_y = l;
+						}
+					}
+				}
+				//Wert Zurueckfuehren
+				pre_node_deriv->getArray(z_pos,y_pos+max_node_index_y)[x_pos+max_node_index_x]= node_deriv->getArray(z_pos,y_pos)[x_pos];
 			}
 		}
 	}
-	//Sigmoid hinzufügen
-	for(int z_pos=0; z_pos < node_deriv->getZ(); z_pos++){
-		for(int y_pos=0; y_pos < node_deriv->getY(); y_pos++){
-			for(int x_pos=0; x_pos < node_deriv->getX(); x_pos++){
-				float z = mathematics::sigmoid_once_inverse(node_deriv->getArray(z_pos, y_pos)[x_pos]);
-				node_deriv->getArray(z_pos, y_pos)[x_pos] *= mathematics::sigmoid_backward_derivated_once(z);
-			}
-		}
-	}
-
-
-
 	return true;
 }

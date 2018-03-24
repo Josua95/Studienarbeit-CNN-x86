@@ -37,9 +37,9 @@ public:
 	float *getBias(int feature_map);
 	float *getWeight(int feature_map);
 
-	bool generate(Tensor *pre_tensor);
-	bool forward(Tensor *pre_tensor);
-	bool backward(Tensor *post_tensor);
+	bool generate(Tensor *pre_node);
+	bool forward(Tensor *pre_node);
+	bool backward(Tensor *pre_node_deriv, Tensor *pre_node);
 
 };
 

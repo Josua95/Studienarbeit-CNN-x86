@@ -2,7 +2,7 @@
  * FullyConnectedLayer.hpp
  *
  *  Created on: 29.11.2017
- *      Author: Benjamin Riedle
+ *      Author: Josua Benz
  */
 
 #ifndef FULLYCONNECTEDLAYER_HPP_
@@ -14,7 +14,6 @@ class FullyConnected_Layer{
 private:
 	int size;
 	Tensor *node;
-	Tensor *node_z;
 	Tensor *node_deriv;
 	Tensor *bias;
 	Tensor *bias_deriv;
@@ -26,9 +25,10 @@ public:
 	int getSize();
 	Tensor *getNode();
 
-	bool generate(Tensor *pre_tensor);
-	bool forward(Tensor *pre_tensor);
-	bool backward(Tensor *post_deriv_weight, Tensor *post_deriv_bias);
+	bool generate(Tensor *pre_node);
+	bool forward(Tensor *pre_node);
+	bool backward(Tensor *pre_node_deriv, Tensor *pre_node);
+	bool fix(Tensor *pre_node, int batch_size, float training_rate);
 
 };
 

@@ -24,10 +24,6 @@ float sigmoid_backward_derivated_once(float activation)
 	return activation * (1 - activation);
 }
 
-float sigmoid_once_inverse(float a){
-	return -log(1/a -1);
-}
-
 void sigmoid(float *in, float *out, int size)
 {
 	for(; size>0; size--, in++, out++)
