@@ -15,22 +15,18 @@ class MaxPooling_Layer{
 private:
 	int x_receptive;
 	int y_receptive;
-	int no_feature_maps;
-	Tensor *node;
-	Tensor *node_deriv;
+
 public:
 	MaxPooling_Layer(int x_receptive, int y_receptive);
 	virtual ~MaxPooling_Layer();
 
-	int  getNoFeatureMaps();
-	int  getXReceptive();
-	int  getYReceptive();
-	Tensor *getNodeTensor();
-	float *getNode(int feature_map);
+	Tensor *activation;
+	Tensor *output;
+	Tensor *pre_grads;
 
-	bool generate(Conv_Layer *pre_layer);
-	bool forward(Tensor *pre_node);
-	bool backward(Tensor *pre_node_deriv, Tensor *pre_node);
+	bool generate(Tensor *activation, Tensor *pre_grads);
+	bool forward();
+	bool backward(Tensor *post_grads);
 
 };
 

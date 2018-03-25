@@ -17,29 +17,23 @@ private:
 	int y_receptive;
 	int step_size;
 	int no_feature_maps;
-	Tensor *node;
-	Tensor *node_deriv;
-	Tensor *bias;
-	Tensor *bias_deriv;
-	Tensor *weight;
-	Tensor *weight_deriv;
+
 public:
+	Tensor *activation;
+	Tensor *output;
+	Tensor *grads;
+	Tensor *pre_grads;
+	Tensor *bias;
+	Tensor *bias_grads;
+	Tensor *weight;
+	Tensor *weight_grads;
 	Conv_Layer(int x_receptive, int y_receptive, int step_size, int no_feature_maps);
 	virtual ~Conv_Layer();
-	int  getXReceptive();
-	int  getYReceptive();
-	int  getStepSize();
-	int  getNoFeatureMaps();
 
-	Tensor *getNodeTensor();
-	Tensor *getWeightTensor();
-	float *getNode(int feature_map);
-	float *getBias(int feature_map);
-	float *getWeight(int feature_map);
-
-	bool generate(Tensor *pre_node);
-	bool forward(Tensor *pre_node);
-	bool backward(Tensor *pre_node_deriv, Tensor *pre_node);
+	bool generate(Tensor *activation, Tensor *pre_grads);
+	bool forward();
+	bool backward();
+	bool fix(int batch_size, float training_rate);
 
 };
 

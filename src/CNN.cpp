@@ -52,19 +52,19 @@ int main(int argc, char **argv) {
 		case 0:
 			break;
 		case 1:
-			layers->at(layer_index)->conv_layer->generate(layers->at(layer_index-1)->input_layer->getNode());
+			layers->at(layer_index)->conv_layer->generate(layers->at(layer_index-1)->input_layer->output);
 			break;
 		case 2:
-			layers->at(layer_index)->max_pooling_layer->generate(layers->at(layer_index-1)->conv_layer);
+			layers->at(layer_index)->max_pooling_layer->generate(layers->at(layer_index-1)->conv_layer->output, layers->at(layer_index-1)->conv_layer->grads);
 			break;
 		case 3:
-			layers->at(layer_index)->conv_layer->generate(layers->at(layer_index-1)->max_pooling_layer->getNodeTensor());
+			layers->at(layer_index)->conv_layer->generate(layers->at(layer_index-1)->max_pooling_layer->output, layers->at(layer_index-1)->max_pooling_layer->pre_grads);
 			break;
 		case 4:
-			layers->at(layer_index)->max_pooling_layer->generate(layers->at(layer_index-1)->conv_layer);
+			layers->at(layer_index)->max_pooling_layer->generate(layers->at(layer_index-1)->conv_layer->output, layers->at(layer_index-1)->conv_layer->grads);
 			break;
 		case 5:
-			layers->at(layer_index)->fully_connected_layer->generate(layers->at(layer_index-1)->max_pooling_layer->getNodeTensor());
+			layers->at(layer_index)->fully_connected_layer->generate(layers->at(layer_index-1)->max_pooling_layer->output, layers->at(layer_index-1)->max_pooling_layer->pre_grads);
 			break;
 		default: break;
 		}
@@ -103,11 +103,38 @@ int main(int argc, char **argv) {
 			default: break;
 			}
 		}
+		for(unsigned int layer_index=layers->size()-1;layer_index>=0; layer_index--){
+			switch(layer_index){
+			case 0:
+				layers->at(layer_index)->input_layer->forward(picture->get_input());
+				//mathematics::printTensor(layers->at(layer_index)->input_layer->getNode());
+				break;
+			case 1:
+				layers->at(layer_index)->conv_layer->forward(layers->at(layer_index-1)->input_layer->getNode());
+				//mathematics::printTensor(layers->at(layer_index)->conv_layer->getNodeTensor());
+				//mathematics::printTensor(layers->at(layer_index)->conv_layer->getWeightTensor());
+				break;
+			case 2:
+				layers->at(layer_index)->max_pooling_layer->forward(layers->at(layer_index-1)->conv_layer->getNodeTensor());
+				//mathematics::printTensor(layers->at(layer_index)->max_pooling_layer->getNodeTensor());
+				break;
+			case 3:
+				layers->at(layer_index)->conv_layer->forward(layers->at(layer_index-1)->max_pooling_layer->getNodeTensor());
+				break;
+			case 4:
+				layers->at(layer_index)->max_pooling_layer->forward(layers->at(layer_index-1)->conv_layer->getNodeTensor());
+				break;
+			case 5:
+				layers->at(layer_index)->fully_connected_layer->backward(layers->at(layer_index-1)->max_pooling_layer->getNodeDerivTensor(),layers->at(layer_index-1)->max_pooling_layer->getNodeTensor());
+				break;
+			default: break;
+			}
+		}
 		float *output=layers->at(5)->fully_connected_layer->getNode()->getArray();
 		std::cout << "Forward " << i << " " << output[0] << " " << output[1] << " " << output[2] << " " << output[3] << " " << output[4] << " " << output[5] << " " << output[6] << " " << output[7] << " " << output[8] << " " << output[9] << std::endl;
 
-		if(i%10 == 9){
-
+		if(i== 9){
+			i=0;
 		}
 	}
 

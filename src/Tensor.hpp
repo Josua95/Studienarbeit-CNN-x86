@@ -8,7 +8,7 @@
 #ifndef TENSOR_HPP_
 #define TENSOR_HPP_
 
-class Tensor{
+struct Tensor{
 private:
 	float *array;
 	int x;
@@ -23,6 +23,10 @@ public:
 	float *getArray(int z);
 	float *getArray(int z, int y);
 	float *getArray();
+	Tensor operator()(int x, int y, int z){
+		return this->getArray(z,y)[x];
+	}
 };
+
 
 #endif /* TENSOR_HPP_ */
