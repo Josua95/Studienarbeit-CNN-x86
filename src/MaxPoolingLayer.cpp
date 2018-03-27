@@ -1,8 +1,8 @@
 /*
  * MaxPoolingLayer.cpp
  *
- *  Created on: 29.11.2017
- *      Author: Benjamin Riedle
+ *  Created on: 01.03.2018
+ *      Author: Josua Benz
  */
 
 #include "MaxPoolingLayer.hpp"
@@ -16,26 +16,14 @@ MaxPooling_Layer::MaxPooling_Layer(int x_receptive, int y_receptive){
 	this->y_receptive = y_receptive;
 	activation = NULL;
 	output = NULL;
+	grads = NULL;
 	pre_grads = NULL;
 
 }
 
 MaxPooling_Layer::~MaxPooling_Layer() {
-	// TODO Auto-generated destructor stub
-}
-
-int MaxPooling_Layer::getXReceptive()
-{
-	return x_receptive;
-}
-
-int MaxPooling_Layer::getYReceptive()
-{
-	return y_receptive;
-}
-
-Tensor *MaxPooling_Layer::getNode(){
-	return output;
+	delete output;
+	delete grads;
 }
 
 bool MaxPooling_Layer::generate(Tensor *activation, Tensor *pre_grads){
@@ -79,7 +67,7 @@ bool MaxPooling_Layer::forward(){
 	}
 	return true;
 }
-bool MaxPooling_Layer::backward(Tensor *post_grads){
+bool MaxPooling_Layer::backward(){
 
 	int step = activation->getX() - output->getX() + 1;
 
@@ -96,6 +84,9 @@ bool MaxPooling_Layer::backward(Tensor *post_grads){
 				//benachbarte Elemente durchgehen und max ermitteln
 				for (int l = 0; l < step; l++){
 					for (int m = 0; m < step; m++){
+						//pre_grads auf 0 setzten
+						pre_grads->getArray(z_pos, y_pos+l)[x_pos+m];
+
 						if (max_node_value < activation->getArray(z_pos,y_pos+l)[x_pos+m]){
 							max_node_value = activation->getArray(z_pos,y_pos+l)[x_pos+m];
 							max_node_index_x = m;
@@ -103,8 +94,8 @@ bool MaxPooling_Layer::backward(Tensor *post_grads){
 						}
 					}
 				}
-				//Wert Zurueckfuehren
-				pre_grads->getArray(z_pos,y_pos+max_node_index_y)[x_pos+max_node_index_x]= post_grads->getArray(z_pos,y_pos)[x_pos];
+				//Wert Zurueckfuehren an den Node mit dem größten Wert
+				pre_grads->getArray(z_pos,y_pos+max_node_index_y)[x_pos+max_node_index_x]= grads->getArray(z_pos,y_pos)[x_pos];
 			}
 		}
 	}

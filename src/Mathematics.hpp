@@ -1,8 +1,8 @@
 /*
  * mathematics.h
  *
- *  Created on: 05.12.2017
- *      Author: Florian
+ *  Created on: 01.03.2018
+ *      Author: Josua Benz
  */
 
 #ifndef MATHEMATICS_HPP_

@@ -1,8 +1,8 @@
 /*
  * mathematics.cpp
  *
- *  Created on: 05.12.2017
- *      Author: Florian
+ *  Created on: 01.03.2018
+ *      Author: Josua Benz
  */
 
 #include "Mathematics.hpp"

@@ -46,11 +46,11 @@ bool Conv_Layer::generate(Tensor *activation, Tensor *pre_grads){
 	weight = new Tensor(x_receptive, y_receptive, no_feature_maps);
 	mathematics::set_tensor_random(weight);
 	weight_grads = new Tensor(x_receptive, y_receptive, no_feature_maps);
-	mathematics::set_tensor_random(weight_grads);
+	mathematics::set_tensor(weight_grads, 0.0);
 	bias = new Tensor(1,1, no_feature_maps);
 	mathematics::set_tensor_random(bias);
 	bias_grads = new Tensor(x_receptive, y_receptive, no_feature_maps);
-	mathematics::set_tensor_random(bias_grads);
+	mathematics::set_tensor(bias_grads, 0.0);
 	output = new Tensor(x_size, y_size, activation->getZ()*no_feature_maps);
 	grads = new Tensor(x_size, y_size, activation->getZ()*no_feature_maps);
 	return true;
@@ -106,7 +106,36 @@ bool Conv_Layer::forward(){
 
 bool Conv_Layer::backward(){
 
-	#pragma omp for
+	mathematics::set_tensor(pre_grads, 0.0);
+
+	//jedes Element des Gradienten/des Outputs
+	for(int grad_z=0; grad_z < grads->getZ(); grad_z++){
+		for(int grad_y=0; grad_y < grads->getY(); grad_y++){
+			for(int grad_x=0; grad_x < grads->getX(); grad_x++){
+				//entsprechend des receptive die Inputs verwenden, die
+				for(int add_x = 0; add_x < x_receptive; add_x++){
+					for(int add_y = 0; add_y < y_receptive; add_x ++){
+						pre_grads->getArray(grad_z, grad_y+add_y)[grad_x+add_x] += weight->getArray(grad_z%no_feature_maps, grad_y+add_y)[grad_x+add_x]*grads->getArray(grad_z, grad_y)[grad_x];
+					}
+				}
+
+			}
+		}
+	}
+	//Sigmoiod' von activation multiplizieren
+	for(int grad_z=0; grad_z < grads->getZ(); grad_z++){
+		for(int grad_y=0; grad_y < grads->getY(); grad_y++){
+			for(int grad_x=0; grad_x < grads->getX(); grad_x++){
+
+				pre_grads->getArray(grad_z, grad_y)[grad_x]*=mathematics::sigmoid_backward_derivated_once(activation->getArray(grad_z, grad_y)[grad_x]));
+
+			}
+		}
+	}
+
+
+	//pre_grads bestimmen
+	/*#pragma omp for
 	for(int pre_z_pos=0; pre_z_pos < activation->getZ(); pre_z_pos++){
 		//jedes Element der Matrix von Input Layer durchlaufen
 		for(int pre_y_pos = 0; pre_y_pos < activation->getY(); pre_y_pos++){
@@ -135,7 +164,16 @@ bool Conv_Layer::backward(){
 				pre_grads->getArray(pre_z_pos, pre_y_pos)[pre_x_pos]=tmp*mathematics::sigmoid_backward_derivated_once(activation->getArray(pre_z_pos,pre_y_pos)[pre_x_pos]);
 			}
 		}
+	}*/
+
+	//bias_grads & weight_grads von diesem Layer bestimmen
+	for(int i=0; i<bias_grads->getSize(); i++){
+		bias_grads->getArray()[i];
 	}
+	for(int i=0; i<weight_grads->getSize(); i++){
+		weight_grads->getArray()[i] =
+	}
+	//TODO dC/dw & eC/db
 
 	return true;
 }
@@ -144,10 +182,14 @@ bool Conv_Layer::fix(int batch_size, float training_rate){
 	int pre_features = output->getX() / no_feature_maps;
 
 	for(int feature_map=0; feature_map<no_feature_maps; feature_map++){
-		bias->getArray()[feature_map] -= training_rate*bias_grads->getArray()[feature_map];
+		bias->getArray()[feature_map] -= training_rate/batch_size * bias_grads->getArray()[feature_map];
 		//TODO fix() ConvLayer
+
+
+
 	}
 
-	mathematics::set_tensor(grads, 0.0);
+	mathematics::set_tensor(weight_grads, 0.0);
+	mathematics::set_tensor(bias_grads, 0.0);
 	return true;
 }

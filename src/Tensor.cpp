@@ -2,7 +2,7 @@
  * Tensor.cpp
  *
  *  Created on: 06.03.2018
- *      Author: josua
+ *      Author: Josua Benz
  */
 
 #include "Tensor.hpp"
@@ -21,6 +21,10 @@ Tensor::Tensor(int x, int y){
 	array = new float[x*y];
 }
 
+Tensor::~Tensor(){
+	delete[] array;
+}
+
 int Tensor::getX(){
 	return x;
 }
@@ -31,6 +35,10 @@ int Tensor::getY(){
 
 int Tensor::getZ(){
 	return z;
+}
+
+int Tensor::getSize(){
+	return x*y*z;
 }
 
 float *Tensor::getArray(int z, int y){

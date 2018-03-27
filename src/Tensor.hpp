@@ -2,7 +2,7 @@
  * Tensor.hpp
  *
  *  Created on: 06.03.2018
- *      Author: josua
+ *      Author: Josua Benz
  */
 
 #ifndef TENSOR_HPP_
@@ -17,9 +17,11 @@ private:
 public:
 	Tensor(int x, int y, int z);
 	Tensor(int x,int y);
+	virtual ~Tensor();
 	int getX();
 	int getY();
 	int getZ();
+	int getSize();
 	float *getArray(int z);
 	float *getArray(int z, int y);
 	float *getArray();

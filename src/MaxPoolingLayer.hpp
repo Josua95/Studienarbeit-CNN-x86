@@ -1,8 +1,8 @@
 /*
  * MaxPoolingLayer.hpp
  *
- *  Created on: 29.11.2017
- *      Author: Benjamin Riedle
+ *  Created on: 01.03.2018
+ *      Author: Josua Benz
  */
 
 #ifndef MAXPOOLINGLAYER_HPP_
@@ -22,11 +22,12 @@ public:
 
 	Tensor *activation;
 	Tensor *output;
+	Tensor *grads;
 	Tensor *pre_grads;
 
 	bool generate(Tensor *activation, Tensor *pre_grads);
 	bool forward();
-	bool backward(Tensor *post_grads);
+	bool backward();
 
 };
 

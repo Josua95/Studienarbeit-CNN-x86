@@ -1,8 +1,8 @@
 /*
  * InputLayer.cpp
  *
- *  Created on: 29.11.2017
- *      Author: Benjamin Riedle
+ *  Created on: 01.03.2018
+ *      Author: Josua Benz
  */
 
 #include "InputLayer.hpp"
