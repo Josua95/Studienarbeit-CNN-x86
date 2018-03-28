@@ -115,7 +115,9 @@ bool Conv_Layer::backward(){
 				//entsprechend des receptive die Inputs verwenden, die
 				for(int add_x = 0; add_x < x_receptive; add_x++){
 					for(int add_y = 0; add_y < y_receptive; add_x ++){
-						pre_grads->getArray(grad_z, grad_y+add_y)[grad_x+add_x] += weight->getArray(grad_z%no_feature_maps, grad_y+add_y)[grad_x+add_x]*grads->getArray(grad_z, grad_y)[grad_x];
+						pre_grads->getArray(grad_z%no_feature_maps, grad_y+add_y)[grad_x+add_x] += weight->getArray(grad_z%no_feature_maps, grad_y+add_y)[grad_x+add_x] * grads->getArray(grad_z, grad_y)[grad_x];
+						weight_grads->getArray(grad_z%no_feature_maps, add_y)[add_x] += activation->getArray(grad_z, grad_y+add_y)[grad_x+add_x] * grads->getArray(grad_z, grad_y)[grad_x];
+						bias_grads->getArray()[grad_z%no_feature_maps] += grads
 					}
 				}
 
@@ -123,57 +125,15 @@ bool Conv_Layer::backward(){
 		}
 	}
 	//Sigmoiod' von activation multiplizieren
-	for(int grad_z=0; grad_z < grads->getZ(); grad_z++){
-		for(int grad_y=0; grad_y < grads->getY(); grad_y++){
-			for(int grad_x=0; grad_x < grads->getX(); grad_x++){
+	for(int grad_z=0; grad_z < pre_grads->getZ(); grad_z++){
+		for(int grad_y=0; grad_y < pre_grads->getY(); grad_y++){
+			for(int grad_x=0; grad_x < pre_grads->getX(); grad_x++){
 
-				pre_grads->getArray(grad_z, grad_y)[grad_x]*=mathematics::sigmoid_backward_derivated_once(activation->getArray(grad_z, grad_y)[grad_x]));
+				pre_grads->getArray(grad_z, grad_y)[grad_x] *= mathematics::sigmoid_backward_derivated_once(activation->getArray(grad_z, grad_y)[grad_x]);
 
 			}
 		}
 	}
-
-
-	//pre_grads bestimmen
-	/*#pragma omp for
-	for(int pre_z_pos=0; pre_z_pos < activation->getZ(); pre_z_pos++){
-		//jedes Element der Matrix von Input Layer durchlaufen
-		for(int pre_y_pos = 0; pre_y_pos < activation->getY(); pre_y_pos++){
-			for(int pre_x_pos = 0; pre_x_pos < activation->getX();pre_x_pos++){
-
-				//Ausrechnen, welche Gewichte genommen werden können
-				int start_x_rec=0;
-				int stop_x_rec=x_receptive-1;
-				if(pre_x_pos < x_receptive-1) stop_x_rec = pre_x_pos;
-				else if(pre_x_pos > activation->getX()-x_receptive) start_x_rec = x_receptive + pre_x_pos - activation->getX();
-
-				int start_y_rec=0;
-				int stop_y_rec=y_receptive-1;
-				if(pre_y_pos < y_receptive-1) stop_y_rec = pre_y_pos;
-				else if(pre_y_pos > activation->getY()-y_receptive) start_y_rec = y_receptive + pre_y_pos - activation->getY();
-
-				float tmp=0;
-				//über verschiedene Features
-				for(int z_pos=0;z_pos < no_feature_maps;z_pos++){
-					for(int y_rec = start_y_rec; y_rec <= stop_y_rec ; y_rec++){
-						for(int x_rec = start_x_rec; x_rec <= stop_x_rec ; x_rec++){
-							tmp+=weight->getArray(z_pos,y_rec)[x_rec]*grads->getArray(pre_z_pos*no_feature_maps+z_pos, pre_y_pos-y_rec)[pre_x_pos-x_rec];
-						}
-					}
-				}
-				pre_grads->getArray(pre_z_pos, pre_y_pos)[pre_x_pos]=tmp*mathematics::sigmoid_backward_derivated_once(activation->getArray(pre_z_pos,pre_y_pos)[pre_x_pos]);
-			}
-		}
-	}*/
-
-	//bias_grads & weight_grads von diesem Layer bestimmen
-	for(int i=0; i<bias_grads->getSize(); i++){
-		bias_grads->getArray()[i];
-	}
-	for(int i=0; i<weight_grads->getSize(); i++){
-		weight_grads->getArray()[i] =
-	}
-	//TODO dC/dw & eC/db
 
 	return true;
 }

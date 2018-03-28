@@ -146,6 +146,7 @@ bool FullyConnected_Layer::fix(int batch_size, float training_rate){
 		}
 	}
 
-	mathematics::set_tensor(grads, 0.0);
+	mathematics::set_tensor(weight_grads, 0.0);
+	mathematics::set_tensor(bias_grads, 0.0);
 	return true;
 }
