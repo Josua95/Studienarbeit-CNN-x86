@@ -25,7 +25,7 @@ public:
 	float *getArray(int z);
 	float *getArray(int z, int y);
 	float *getArray();
-	Tensor operator()(int x, int y, int z){
+	float operator()(int x, int y, int z){
 		return this->getArray(z,y)[x];
 	}
 };

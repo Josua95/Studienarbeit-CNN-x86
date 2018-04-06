@@ -101,6 +101,7 @@ void set_tensor_random(Tensor *tensor){
 		for(int y_pos = 0; y_pos < tensor->getY(); y_pos++){
 			for(int x_pos = 0; x_pos < tensor->getX();x_pos++){
 				float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+				r/=100;
 				tensor->getArray(z_pos, y_pos)[x_pos]= r;
 			}
 		}

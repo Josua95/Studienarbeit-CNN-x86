@@ -42,12 +42,13 @@ bool FullyConnected_Layer::generate(Tensor *activation, Tensor *pre_grads){
 	grads = new Tensor(size,1);
 	weight = new Tensor(size*activation->getX(),activation->getY(),activation->getZ());
 	mathematics::set_tensor_random(weight);
+	//mathematics::set_tensor(weight, 0.0);
 	weight_grads = new Tensor(size*activation->getX(),activation->getY(),activation->getZ());
-	mathematics::set_tensor_random(weight_grads);
+	mathematics::set_tensor(weight_grads, 0.0);
 	bias = new Tensor(size,1);
-	mathematics::set_tensor_random(bias);
+	mathematics::set_tensor(bias, 0.0);
 	bias_grads = new Tensor(size,1);
-	mathematics::set_tensor_random(bias_grads);
+	mathematics::set_tensor(bias_grads, 0.0);
 	return true;
 }
 
@@ -73,9 +74,10 @@ bool FullyConnected_Layer::forward(){
 			}
 		}
 	}
+	#pragma omp for
 	for(int node_index = 0; node_index < output->getX(); node_index++){
 		//Teilen durch Anzahl der Activations pro Node
-		output->getArray()[node_index] /= (activation->getX()*activation->getY()*activation->getZ());
+		//output->getArray()[node_index] /= (activation->getX()*activation->getY()*activation->getZ());
 		//Bias hinzufuegen
 		output->getArray()[node_index] += bias->getArray()[node_index];
 		//Sigmoid anwenden
@@ -116,7 +118,7 @@ bool FullyConnected_Layer::backward(){
 		}
 	}
 	//grads bias von diesem Layer
-	for(int size=0; size < grads->getSize(); size++){
+	for(int size=0; size < output->getSize(); size++){
 		bias_grads->getArray()[size] += grads->getArray()[size];
 	}
 
@@ -133,13 +135,10 @@ bool FullyConnected_Layer::fix(int batch_size, float training_rate){
 	for(int node_index = 0; node_index < output->getX(); node_index++){
 		bias->getArray()[node_index] -= training_rate/batch_size * bias_grads->getArray()[node_index];
 
-		for(int z_pos = 0; z_pos < activation->getZ(); z_pos++)
-		{
-			for(int y_pos = 0; y_pos < activation->getY(); y_pos++)
-			{
-				for(int x_pos = 0; x_pos < activation->getX(); x_pos++)
-				{
-					weight->getArray(z_pos,y_pos)[x_pos+node_index*activation] -= training_rate/batch_size * weight_grads->getArray(z_pos,y_pos)[x_pos+node_index*activation];
+		for(int z_pos = 0; z_pos < activation->getZ(); z_pos++){
+			for(int y_pos = 0; y_pos < activation->getY(); y_pos++){
+				for(int x_pos = 0; x_pos < activation->getX(); x_pos++){
+					weight->getArray(z_pos,y_pos)[x_pos+node_index*activation->getX()] -= training_rate/batch_size * weight_grads->getArray(z_pos,y_pos)[x_pos+node_index*activation->getX()];
 
 				}
 			}

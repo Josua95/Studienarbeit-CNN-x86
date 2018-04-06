@@ -6,6 +6,7 @@
  */
 
 #include "Tensor.hpp"
+#include <assert.h>
 
 Tensor::Tensor(int x, int y, int z){
 	this->x=x;
@@ -42,10 +43,13 @@ int Tensor::getSize(){
 }
 
 float *Tensor::getArray(int z, int y){
+	assert(z<this->z);
+	assert(y<this->y);
 	return array+z*this->y*x+y*x;
 }
 
 float *Tensor::getArray(int z){
+	assert(z<this->z);
 	return array+z*y*x;
 }
 

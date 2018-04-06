@@ -24,9 +24,6 @@ Input_Layer::Input_Layer(int x, int y){
 Input_Layer::~Input_Layer() {
 
 }
-Tensor *Input_Layer::getNode(){
-	return output;
-}
 
 bool Input_Layer::forward(float *picture){
 	#pragma omp for
