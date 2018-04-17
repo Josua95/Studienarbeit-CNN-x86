@@ -42,7 +42,7 @@ Picture * PictureContainer::get_nextpicture(void)
 	{
 		next_index=0;
 		file_index++;
-		if(file_index > num_of_files)
+		if(file_index >= num_of_files)
 		{
 			file_index = 0;
 		}

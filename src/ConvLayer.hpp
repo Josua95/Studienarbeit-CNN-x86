@@ -21,8 +21,8 @@ private:
 public:
 	Tensor *activation;
 	Tensor *output;
-	Tensor *grads;
-	Tensor *pre_grads;
+	Tensor *output_grads;
+	Tensor *activation_grads;
 	Tensor *bias;
 	Tensor *bias_grads;
 	Tensor *weight;
