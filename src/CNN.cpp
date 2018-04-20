@@ -129,11 +129,13 @@ int main(int argc, char **argv) {
 			for(int i=0; i < 10; i++){
 				if(picture->get_output()[i] == 1.0f){
 					layers->at(4)->fully_connected_layer->grads->getArray()[i] = layers->at(4)->fully_connected_layer->output->getArray()[i] -1.0f;
+					cost += pow( 1.0 - layers->at(4)->fully_connected_layer->output->getArray()[i], 2);
 					layers->at(4)->fully_connected_layer->grads->getArray()[i] *= mathematics::sigmoid_backward_derivated_once(layers->at(4)->fully_connected_layer->output->getArray()[i]);
 					//std::cout << 1.0f - layers->at(4)->fully_connected_layer->output->getArray()[i] << " ";
 				}
 				else{
 					layers->at(4)->fully_connected_layer->grads->getArray()[i] = layers->at(4)->fully_connected_layer->output->getArray()[i];
+					cost += pow( layers->at(4)->fully_connected_layer->output->getArray()[i] , 2);
 					layers->at(4)->fully_connected_layer->grads->getArray()[i] *= mathematics::sigmoid_backward_derivated_once(layers->at(4)->fully_connected_layer->output->getArray()[i]);
 					//std::cout << -layers->at(4)->fully_connected_layer->output->getArray()[i] << " ";
 				}
@@ -211,6 +213,7 @@ int main(int argc, char **argv) {
 
 		std::cout << "Finished Epoche " << n << std::endl;
 		std::cout << "Rate: " << (double)hit/1000.0 << std::endl;
+		std::cout << "Cost: " << cost << std::endl;
 	}
 }
 
