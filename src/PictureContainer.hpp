@@ -10,7 +10,7 @@
 
 #include "Picture.hpp"
 
-#define PICS_PER_FILE 1000
+#define PICS_PER_FILE 100
 
 class PictureContainer {
 private:

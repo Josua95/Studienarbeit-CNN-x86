@@ -13,8 +13,8 @@
 #include "PictureContainer.hpp"
 #include "Mathematics.hpp"
 
-#define TRAINING_RATE 1
-#define BATCH_SIZE 1
+#define TRAINING_RATE 0.01
+#define BATCH_SIZE 10
 
 union Layer{
 	Conv_Layer *conv_layer;
@@ -28,11 +28,11 @@ int main(int argc, char **argv) {
 
 	std::vector<Layer*> *layers = new std::vector<Layer*>;
 	Layer layer1;
-	layer1.conv_layer = new Conv_Layer(5,5,1,6);
+	layer1.conv_layer = new Conv_Layer(5,5,1,8);
 	Layer layer2;
 	layer2.max_pooling_layer = new MaxPooling_Layer(2,2);
 	Layer layer3;
-	layer3.conv_layer = new Conv_Layer(5,5,1,16);
+	layer3.conv_layer = new Conv_Layer(3,3,1,10);
 	Layer layer4;
 	layer4.max_pooling_layer = new MaxPooling_Layer(2,2);
 	Layer layer5;
@@ -69,12 +69,15 @@ int main(int argc, char **argv) {
 
 	}
 
-	PictureContainer *train_picture_container = new PictureContainer("./train", 55);
+	PictureContainer *train_picture_container = new PictureContainer("./train", 1);
 
 	//FORWARD
-	for(int n=0; n<100; n++){
+	for(int n=0; n<100000; n++){
+		int hit=0;
+		float cost=0.0;
 		//1 Epoche
-		for(int i=0; i<55000; i++){
+
+		for(int i=0; i<1000; i++){
 
 			Picture *picture = train_picture_container->get_nextpicture();
 			for(int y=0; y<new_picture->getY(); y++){
@@ -89,7 +92,7 @@ int main(int argc, char **argv) {
 			}
 			std::cout << std::endl;*/
 
-			for(unsigned int layer_index=0;layer_index<layers->size(); layer_index++){
+			for(unsigned int layer_index=0;layer_index < layers->size(); layer_index++){
 				switch(layer_index){
 				case 0:
 					layers->at(layer_index)->conv_layer->forward();
@@ -117,22 +120,29 @@ int main(int argc, char **argv) {
 				default: break;
 				}
 			}
-
+			float soft_output[10];
+			mathematics::softmax(layers->at(4)->fully_connected_layer->output->getArray(), soft_output, 10);
+			/*for(int i=0; i<10; i++){
+				layers->at(4)->fully_connected_layer->output->getArray()[i] = soft_output[i];
+			}*/
 			//BACKWARD
 			for(int i=0; i < 10; i++){
 				if(picture->get_output()[i] == 1.0f){
 					layers->at(4)->fully_connected_layer->grads->getArray()[i] = layers->at(4)->fully_connected_layer->output->getArray()[i] -1.0f;
+					layers->at(4)->fully_connected_layer->grads->getArray()[i] *= mathematics::sigmoid_backward_derivated_once(layers->at(4)->fully_connected_layer->output->getArray()[i]);
 					//std::cout << 1.0f - layers->at(4)->fully_connected_layer->output->getArray()[i] << " ";
 				}
 				else{
 					layers->at(4)->fully_connected_layer->grads->getArray()[i] = layers->at(4)->fully_connected_layer->output->getArray()[i];
+					layers->at(4)->fully_connected_layer->grads->getArray()[i] *= mathematics::sigmoid_backward_derivated_once(layers->at(4)->fully_connected_layer->output->getArray()[i]);
 					//std::cout << -layers->at(4)->fully_connected_layer->output->getArray()[i] << " ";
 				}
 			}
 			//std::cout << std::endl;
 
 
-			for(unsigned int layer_index=layers->size()-1;layer_index > 0; layer_index--){
+
+			for(int layer_index=layers->size()-1;layer_index >= 0; layer_index--){
 				switch(layer_index){
 				case 0:
 					layers->at(layer_index)->conv_layer->backward();
@@ -157,11 +167,23 @@ int main(int argc, char **argv) {
 			}
 
 			float *output=layers->at(4)->fully_connected_layer->output->getArray();
-			std::cout << "Forward " << i << " " << output[0] << " " << output[1] << " " << output[2] << " " << output[3] << " " << output[4] << " " << output[5] << " " << output[6] << " " << output[7] << " " << output[8] << " " << output[9] << std::endl;
+			//std::cout << "Forward " << i << " " << output[0] << " " << output[1] << " " << output[2] << " " << output[3] << " " << output[4] << " " << output[5] << " " << output[6] << " " << output[7] << " " << output[8] << " " << output[9] << std::endl;
+
+			//ermitteln, ob Output passt
+			int max_index=0;
+			float max_value=0;
+			for(int i=0; i < layers->at(4)->fully_connected_layer->output->getX();i++){
+				if(max_value < output[i]){
+					max_value = output[i];
+					max_index = i;
+				}
+			}
+			if(picture->get_output()[max_index] == 1)hit++;
+
 
 			//FIX
-			if(i%BATCH_SIZE == 0){
-				for(unsigned int layer_index=0;layer_index <= 5; layer_index++){
+			if(i%BATCH_SIZE+1 == BATCH_SIZE){
+				for(unsigned int layer_index=0;layer_index < layers->size(); layer_index++){
 					switch(layer_index){
 					case 0:
 						//mathematics::printTensor(layers->at(layer_index)->conv_layer->weight_grads);
@@ -188,6 +210,7 @@ int main(int argc, char **argv) {
 		}
 
 		std::cout << "Finished Epoche " << n << std::endl;
+		std::cout << "Rate: " << (double)hit/1000.0 << std::endl;
 	}
 }
 
