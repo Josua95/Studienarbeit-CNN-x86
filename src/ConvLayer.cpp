@@ -50,12 +50,13 @@ bool Conv_Layer::generate(Tensor *activation, Tensor *pre_grads){
 	for ( int i = 0; i < weight->getZ(); i++ )
 		for ( int j = 0; j < weight->getY(); j++ )
 			for ( int z = 0; z < weight->getX(); z++ )
-				weight->getArray(i,j)[z] = 1.0f / maxval * rand() / float( RAND_MAX );
+				//Wert im Bereich +-0.5
+				weight->getArray(i,j)[z] = 1.0f / maxval * (2*(rand() / float( RAND_MAX)-0.5));
 	weight_grads = new Tensor(x_receptive, y_receptive, no_feature_maps*activation->getZ());
 	mathematics::set_tensor(weight_grads, 0.0);
 	bias = new Tensor(1,1, no_feature_maps);
-	//mathematics::set_tensor_random(bias);
-	mathematics::set_tensor(bias, 0.0);
+	for(int i=0; i< no_feature_maps; i++)bias->getArray()[i] = 0.2 * ((rand() / float( RAND_MAX)-0.5));
+	//mathematics::set_tensor(bias, 0.0);
 	bias_grads = new Tensor(1, 1, no_feature_maps);
 	mathematics::set_tensor(bias_grads, 0.0);
 	output = new Tensor(x_size, y_size, no_feature_maps);
@@ -105,20 +106,32 @@ bool Conv_Layer::forward(){
 				//Bias hinzufuegen
 				output->getArray(feature_map, y_pos)[x_pos] += bias->getArray(feature_map, 0)[0];
 				//Sigmoid anwenden
-				//output->getArray(pre_feature*no_feature_maps+feature_map, y_pos)[x_pos] = mathematics::sigmoid_once(output->getArray(pre_feature*no_feature_maps+feature_map, y_pos)[x_pos]);
+				output->getArray(feature_map, y_pos)[x_pos] = mathematics::sigmoid_once(output->getArray(feature_map, y_pos)[x_pos]);
 			}
 		}
 	}
 	return true;
+	/*for ( int filter = 0; filter < no_feature_maps; filter++ ){
+
+		for ( int x = 0; x < output->getX(); x++ ){
+			for ( int y = 0; y < output->getY(); y++ ){
+				float sum = 0;
+				for ( int i = 0; i < weight->getX(); i++ )
+					for ( int j = 0; j < weight->getY(); j++ )
+						for ( int z = 0; z < activation->getZ(); z++ )
+							sum += weight->getArray(filter*activation->getZ()+z, j)[i]*activation->getArray(z, y+i)[x+i];
+
+				output->getArray(filter, y)[x] = sum;
+			}
+		}*/
 }
 
 bool Conv_Layer::backward(){
 
 	mathematics::set_tensor(activation_grads, 0.0);
-	int pre_features = output->getZ()/no_feature_maps;
 
 	//jedes Element des Gradienten/des Outputs
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for(int grad_z=0; grad_z < activation_grads->getZ(); grad_z++){
 		for(int grad_y=0; grad_y < activation_grads->getY(); grad_y++){
 			for(int grad_x=0; grad_x < activation_grads->getX(); grad_x++){
@@ -141,22 +154,23 @@ bool Conv_Layer::backward(){
 							activation_grads->getArray(grad_z, grad_y)[grad_x]  += output_grads->getArray(z_pos/activation->getZ(), grad_y-y_rec)[grad_x-x_rec] * weight->getArray(z_pos, y_rec)[x_rec];
 						}
 					}
+					activation_grads->getArray(grad_z, grad_y)[grad_x] *= mathematics::sigmoid_backward_derivated_once(activation->getArray(grad_z, grad_y)[grad_x]);
 				}
 			}
 		}
 	}
 
 	//weight_grads & bias_grads
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for(int z_pos=0; z_pos < output->getZ(); z_pos++){
 
 		for(int y_pos=0; y_pos < output->getY(); y_pos++){
 			for(int x_pos=0; x_pos < output->getX(); x_pos++){
 
 				//Bias hinzufuegen
-				bias_grads->getArray(z_pos,0)[0] += output_grads->getArray(z_pos, y_pos)[x_pos];
+				bias_grads->getArray()[z_pos] += output_grads->getArray(z_pos, y_pos)[x_pos];
 
-				//Weight anpassen
+				//Weight hinzufuegen
 				for(int weight_z=z_pos; weight_z < weight->getZ(); weight_z+=activation->getZ()){
 					for(int weight_x=0; weight_x < weight->getX(); weight_x++){
 						for(int weight_y=0; weight_y < weight->getY(); weight_y++){
@@ -177,7 +191,7 @@ bool Conv_Layer::fix(int batch_size, float training_rate){
 		bias->getArray()[feature_map] -= training_rate/batch_size * bias_grads->getArray()[feature_map];
 		for(int x_rec=0; x_rec < x_receptive; x_rec++){
 			for(int y_rec=0; y_rec < y_receptive; y_rec ++){
-				weight->getArray(x_rec, y_rec)[feature_map] -= training_rate/batch_size * weight_grads->getArray()[feature_map];
+				weight->getArray(x_rec, y_rec)[feature_map] -= training_rate/(batch_size) * weight_grads->getArray()[feature_map];
 			}
 		}
 	}

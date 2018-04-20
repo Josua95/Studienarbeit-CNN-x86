@@ -41,12 +41,17 @@ bool FullyConnected_Layer::generate(Tensor *activation, Tensor *pre_grads){
 	output = new Tensor(size,1);
 	grads = new Tensor(size,1);
 	weight = new Tensor(size*activation->getX(),activation->getY(),activation->getZ());
-	mathematics::set_tensor_random(weight);
-	//mathematics::set_tensor(weight, 0.0);
+	int maxval = activation->getX() * activation->getY() * activation->getZ();
+	for ( int i = 0; i < weight->getZ(); i++ )
+			for ( int j = 0; j < weight->getY(); j++ )
+				for ( int z = 0; z < weight->getX(); z++ )
+					//Wert im Bereich +-0.5
+					weight->getArray(i,j)[z] = 1.0f / maxval * ((rand() / float( RAND_MAX)-0.5));
 	weight_grads = new Tensor(size*activation->getX(),activation->getY(),activation->getZ());
 	mathematics::set_tensor(weight_grads, 0.0);
 	bias = new Tensor(size,1);
-	mathematics::set_tensor(bias, 0.0);
+	for(int i=0; i<size;i++)bias->getArray()[i] = 0.2 * ((rand() / float( RAND_MAX)-0.5));
+	//mathematics::set_tensor(bias, 0.0);
 	bias_grads = new Tensor(size,1);
 	mathematics::set_tensor(bias_grads, 0.0);
 	return true;
@@ -96,10 +101,6 @@ bool FullyConnected_Layer::forward(){
 bool FullyConnected_Layer::backward(){
 	//pre_tensor[i]=weight[i+1]*node_deriv[i+1]*sigmoid_backward_derivated_once(node[i])
 
-	//sigmoid_backward anwenden
-	for(int i=0;i < size; i++){
-		grads->getArray()[i] *= mathematics::sigmoid_backward_derivated_once(output->getArray()[i]);
-	}
 	//jedes Element des pre_grads
 	#pragma omp parallel for
 	for(int z_pos = 0; z_pos < pre_grads->getZ(); z_pos++)
