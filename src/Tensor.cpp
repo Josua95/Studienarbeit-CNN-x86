@@ -9,6 +9,9 @@
 #include <assert.h>
 
 Tensor::Tensor(int x, int y, int z){
+	assert(x>0);
+	assert(y>0);
+	assert(z>0);
 	this->x=x;
 	this->y=y;
 	this->z=z;
@@ -16,6 +19,8 @@ Tensor::Tensor(int x, int y, int z){
 }
 
 Tensor::Tensor(int x, int y){
+	assert(x>0);
+	assert(y>0);
 	this->x=x;
 	this->y=y;
 	z=1;

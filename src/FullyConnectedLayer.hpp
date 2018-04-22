@@ -18,9 +18,9 @@ public:
 	virtual ~FullyConnected_Layer();
 
 	Tensor *activation;
-	Tensor *pre_grads;
+	Tensor *activation_grads;
 	Tensor *output;
-	Tensor *grads;
+	Tensor *output_grads;
 	Tensor *bias;
 	Tensor *bias_grads;
 	Tensor *weight;

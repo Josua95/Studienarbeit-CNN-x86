@@ -11,9 +11,9 @@
 FullyConnected_Layer::FullyConnected_Layer(int size){
 	this->size=size;
 	activation=NULL;
-	pre_grads=NULL;
+	activation_grads=NULL;
 	output = NULL;
-	grads=NULL;
+	output_grads=NULL;
 	weight=NULL;
 	weight_grads=NULL;
 	bias=NULL;
@@ -22,7 +22,7 @@ FullyConnected_Layer::FullyConnected_Layer(int size){
 
 FullyConnected_Layer::~FullyConnected_Layer() {
 	delete output;
-	delete grads;
+	delete output_grads;
 	delete weight;
 	delete weight_grads;
 	delete bias;
@@ -37,16 +37,16 @@ FullyConnected_Layer::~FullyConnected_Layer() {
  */
 bool FullyConnected_Layer::generate(Tensor *activation, Tensor *pre_grads){
 	this->activation=activation;
-	this->pre_grads=pre_grads;
+	this->activation_grads=pre_grads;
 	output = new Tensor(size,1);
-	grads = new Tensor(size,1);
+	output_grads = new Tensor(size,1);
 	weight = new Tensor(size*activation->getX(),activation->getY(),activation->getZ());
 	int maxval = activation->getX() * activation->getY() * activation->getZ();
 	for ( int i = 0; i < weight->getZ(); i++ )
 			for ( int j = 0; j < weight->getY(); j++ )
 				for ( int z = 0; z < weight->getX(); z++ )
-					//Wert im Bereich +-0.5
-					weight->getArray(i,j)[z] = 1.0f / maxval * ((rand() / float( RAND_MAX)-0.5));
+					//weight->getArray(i,j)[z] = 10 * 1.0f / maxval * ((rand() / float( RAND_MAX)-0.5));
+					weight->getArray(i,j)[z] = (2*(rand() / float( RAND_MAX)-0.5))/(maxval/10);
 	weight_grads = new Tensor(size*activation->getX(),activation->getY(),activation->getZ());
 	mathematics::set_tensor(weight_grads, 0.0);
 	bias = new Tensor(size,1);
@@ -103,28 +103,28 @@ bool FullyConnected_Layer::backward(){
 
 	//jedes Element des pre_grads
 	#pragma omp parallel for
-	for(int z_pos = 0; z_pos < pre_grads->getZ(); z_pos++)
+	for(int z_pos = 0; z_pos < activation_grads->getZ(); z_pos++)
 	{
-		for(int y_pos = 0; y_pos < pre_grads->getY(); y_pos++)
+		for(int y_pos = 0; y_pos < activation_grads->getY(); y_pos++)
 		{
-			for(int x_pos = 0; x_pos < pre_grads->getX(); x_pos++)
+			for(int x_pos = 0; x_pos < activation_grads->getX(); x_pos++)
 			{
 				float tmp=0;
 				//jede vorherige Node hat output->getX() Gewichte die Backprppagoiert werden sollen
 				for(int node_index = 0; node_index < output->getX(); node_index++){
 					//tmp = (w(l)*d(l))
-					tmp += weight->getArray(z_pos, y_pos)[x_pos+node_index*activation->getX()] * grads->getArray()[node_index];
+					tmp += weight->getArray(z_pos, y_pos)[x_pos+node_index*activation->getX()] * output_grads->getArray()[node_index];
 					//grads weight von diesem Layer
-					weight_grads->getArray(z_pos, y_pos)[x_pos+node_index*activation->getX()] += activation->getArray(z_pos, y_pos)[x_pos] * grads->getArray()[node_index];
+					weight_grads->getArray(z_pos, y_pos)[x_pos+node_index*activation->getX()] += activation->getArray(z_pos, y_pos)[x_pos] * output_grads->getArray()[node_index];
 				}
 
-				pre_grads->getArray(z_pos,y_pos)[x_pos] = tmp * mathematics::sigmoid_backward_derivated_once(activation->getArray(z_pos,y_pos)[x_pos]);
+				activation_grads->getArray(z_pos,y_pos)[x_pos] = tmp * mathematics::sigmoid_backward_derivated_once(activation->getArray(z_pos,y_pos)[x_pos]);
 			}
 		}
 	}
 	//grads bias von diesem Layer
 	for(int size=0; size < output->getSize(); size++){
-		bias_grads->getArray()[size] += grads->getArray()[size];
+		bias_grads->getArray()[size] += output_grads->getArray()[size];
 	}
 
 	return true;

@@ -51,11 +51,13 @@ bool Conv_Layer::generate(Tensor *activation, Tensor *pre_grads){
 		for ( int j = 0; j < weight->getY(); j++ )
 			for ( int z = 0; z < weight->getX(); z++ )
 				//Wert im Bereich +-0.5
-				weight->getArray(i,j)[z] = 1.0f / maxval * (2*(rand() / float( RAND_MAX)-0.5));
+				//weight->getArray(i,j)[z] = 10.0 * 1.0f / maxval * ((rand() / float( RAND_MAX)-0.5));
+				weight->getArray(i,j)[z] = (2*(rand() / float( RAND_MAX)-0.5))/(maxval/10);
 	weight_grads = new Tensor(x_receptive, y_receptive, no_feature_maps*activation->getZ());
 	mathematics::set_tensor(weight_grads, 0.0);
 	bias = new Tensor(1,1, no_feature_maps);
 	for(int i=0; i< no_feature_maps; i++)bias->getArray()[i] = 0.2 * ((rand() / float( RAND_MAX)-0.5));
+
 	//mathematics::set_tensor(bias, 0.0);
 	bias_grads = new Tensor(1, 1, no_feature_maps);
 	mathematics::set_tensor(bias_grads, 0.0);
