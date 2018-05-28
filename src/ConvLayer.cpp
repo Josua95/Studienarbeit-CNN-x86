@@ -71,44 +71,47 @@ bool Conv_Layer::forward(){
 	mathematics::set_tensor(output, 0.0);
 
 	//Alle Elemente des vorherigen Layers
-	#pragma omp parallel for
-	for(int pre_z_pos=0; pre_z_pos < activation->getZ(); pre_z_pos++){
-		//jedes Element der Matrix von Input Layer durchlaufen
-		for(int pre_y_pos = 0; pre_y_pos < activation->getY(); pre_y_pos++){
-			for(int pre_x_pos = 0; pre_x_pos < activation->getX();pre_x_pos++){
+	#pragma omp parallel
+	{
+		#pragma omp for
+		for(int pre_z_pos=0; pre_z_pos < activation->getZ(); pre_z_pos++){
+			//jedes Element der Matrix von Input Layer durchlaufen
+			for(int pre_y_pos = 0; pre_y_pos < activation->getY(); pre_y_pos++){
+				for(int pre_x_pos = 0; pre_x_pos < activation->getX();pre_x_pos++){
 
-				//Ausrechnen, welche Gewichte genommen werden können
-				int start_x_rec=0;
-				int stop_x_rec=x_receptive-1;
-				if(pre_x_pos < x_receptive-1) stop_x_rec = pre_x_pos;
-				else if(pre_x_pos > activation->getX()-x_receptive) start_x_rec = x_receptive + pre_x_pos - activation->getX();
+					//Ausrechnen, welche Gewichte genommen werden können
+					int start_x_rec=0;
+					int stop_x_rec=x_receptive-1;
+					if(pre_x_pos < x_receptive-1) stop_x_rec = pre_x_pos;
+					else if(pre_x_pos > activation->getX()-x_receptive) start_x_rec = x_receptive + pre_x_pos - activation->getX();
 
-				int start_y_rec=0;
-				int stop_y_rec=y_receptive-1;
-				if(pre_y_pos < y_receptive-1) stop_y_rec = pre_y_pos;
-				else if(pre_y_pos > activation->getY()-y_receptive) start_y_rec = y_receptive + pre_y_pos - activation->getY();
+					int start_y_rec=0;
+					int stop_y_rec=y_receptive-1;
+					if(pre_y_pos < y_receptive-1) stop_y_rec = pre_y_pos;
+					else if(pre_y_pos > activation->getY()-y_receptive) start_y_rec = y_receptive + pre_y_pos - activation->getY();
 
-				//über verschiedene Features
-				for(int z_pos=pre_z_pos;z_pos < weight->getZ();z_pos+=activation->getZ()){
-					//Ueber Gewichte iterieren und in float-Array speichern
-					for(int y_rec = start_y_rec; y_rec <= stop_y_rec ; y_rec++){
-						for(int x_rec = start_x_rec; x_rec <= stop_x_rec ; x_rec++){
-							output->getArray(z_pos/activation->getZ(), pre_y_pos-y_rec)[pre_x_pos-x_rec] += activation->getArray(pre_z_pos,pre_y_pos)[pre_x_pos] * weight->getArray(z_pos,y_rec)[x_rec];
+					//über verschiedene Features
+					for(int z_pos=pre_z_pos;z_pos < weight->getZ();z_pos+=activation->getZ()){
+						//Ueber Gewichte iterieren und in float-Array speichern
+						for(int y_rec = start_y_rec; y_rec <= stop_y_rec ; y_rec++){
+							for(int x_rec = start_x_rec; x_rec <= stop_x_rec ; x_rec++){
+								output->getArray(z_pos/activation->getZ(), pre_y_pos-y_rec)[pre_x_pos-x_rec] += activation->getArray(pre_z_pos,pre_y_pos)[pre_x_pos] * weight->getArray(z_pos,y_rec)[x_rec];
+							}
 						}
 					}
 				}
 			}
 		}
-	}
-	//Bias hizufuegen & Sigmoid
-	#pragma omp parallel for
-	for(int y_pos = 0; y_pos < output->getY(); y_pos++){
-		for(int x_pos = 0; x_pos < output->getX();x_pos++){
-			for(int feature_map=0;feature_map<no_feature_maps;feature_map++){
-				//Bias hinzufuegen
-				output->getArray(feature_map, y_pos)[x_pos] += bias->getArray(feature_map, 0)[0];
-				//Sigmoid anwenden
-				output->getArray(feature_map, y_pos)[x_pos] = mathematics::sigmoid_once(output->getArray(feature_map, y_pos)[x_pos]);
+		//Bias hizufuegen & Sigmoid
+		#pragma omp for
+		for(int y_pos = 0; y_pos < output->getY(); y_pos++){
+			for(int x_pos = 0; x_pos < output->getX();x_pos++){
+				for(int feature_map=0;feature_map<no_feature_maps;feature_map++){
+					//Bias hinzufuegen
+					output->getArray(feature_map, y_pos)[x_pos] += bias->getArray(feature_map, 0)[0];
+					//Sigmoid anwenden
+					output->getArray(feature_map, y_pos)[x_pos] = mathematics::sigmoid_once(output->getArray(feature_map, y_pos)[x_pos]);
+				}
 			}
 		}
 	}
@@ -133,57 +136,59 @@ bool Conv_Layer::backward(){
 	mathematics::set_tensor(activation_grads, 0.0);
 
 	//jedes Element des Gradienten/des Outputs
-	#pragma omp parallel for
-	for(int grad_z=0; grad_z < activation_grads->getZ(); grad_z++){
-		for(int grad_y=0; grad_y < activation_grads->getY(); grad_y++){
-			for(int grad_x=0; grad_x < activation_grads->getX(); grad_x++){
+	#pragma omp parallel
+	{
+		#pragma omp for
+		for(int grad_z=0; grad_z < activation_grads->getZ(); grad_z++){
+			for(int grad_y=0; grad_y < activation_grads->getY(); grad_y++){
+				for(int grad_x=0; grad_x < activation_grads->getX(); grad_x++){
 
-				int start_x_rec=0;
-				int stop_x_rec=x_receptive-1;
-				if(grad_x < x_receptive-1) stop_x_rec = grad_x;
-				else if(grad_x > activation->getX()-x_receptive) start_x_rec = x_receptive + grad_x - activation->getX();
+					int start_x_rec=0;
+					int stop_x_rec=x_receptive-1;
+					if(grad_x < x_receptive-1) stop_x_rec = grad_x;
+					else if(grad_x > activation->getX()-x_receptive) start_x_rec = x_receptive + grad_x - activation->getX();
 
-				int start_y_rec=0;
-				int stop_y_rec=y_receptive-1;
-				if(grad_y < y_receptive-1) stop_y_rec = grad_y;
-				else if(grad_y > activation->getY()-y_receptive) start_y_rec = y_receptive + grad_y - activation->getY();
+					int start_y_rec=0;
+					int stop_y_rec=y_receptive-1;
+					if(grad_y < y_receptive-1) stop_y_rec = grad_y;
+					else if(grad_y > activation->getY()-y_receptive) start_y_rec = y_receptive + grad_y - activation->getY();
 
-				//über verschiedene Features
-				for(int z_pos=grad_z; z_pos < weight->getZ(); z_pos+=activation_grads->getZ()){
-					//Ueber Gewichte iterieren und in float-Array speichern
-					for(int y_rec = start_y_rec; y_rec <= stop_y_rec ; y_rec++){
-						for(int x_rec = start_x_rec; x_rec <= stop_x_rec ; x_rec++){
-							activation_grads->getArray(grad_z, grad_y)[grad_x]  += output_grads->getArray(z_pos/activation->getZ(), grad_y-y_rec)[grad_x-x_rec] * weight->getArray(z_pos, y_rec)[x_rec];
+					//über verschiedene Features
+					for(int z_pos=grad_z; z_pos < weight->getZ(); z_pos+=activation_grads->getZ()){
+						//Ueber Gewichte iterieren und in float-Array speichern
+						for(int y_rec = start_y_rec; y_rec <= stop_y_rec ; y_rec++){
+							for(int x_rec = start_x_rec; x_rec <= stop_x_rec ; x_rec++){
+								activation_grads->getArray(grad_z, grad_y)[grad_x]  += output_grads->getArray(z_pos/activation->getZ(), grad_y-y_rec)[grad_x-x_rec] * weight->getArray(z_pos, y_rec)[x_rec];
+							}
 						}
-					}
-					activation_grads->getArray(grad_z, grad_y)[grad_x] *= mathematics::sigmoid_backward_derivated_once(activation->getArray(grad_z, grad_y)[grad_x]);
-				}
-			}
-		}
-	}
-
-	//weight_grads & bias_grads
-	#pragma omp parallel for
-	for(int z_pos=0; z_pos < output->getZ(); z_pos++){
-
-		for(int y_pos=0; y_pos < output->getY(); y_pos++){
-			for(int x_pos=0; x_pos < output->getX(); x_pos++){
-
-				//Bias hinzufuegen
-				bias_grads->getArray()[z_pos] += output_grads->getArray(z_pos, y_pos)[x_pos];
-
-				//Weight hinzufuegen
-				for(int weight_z=z_pos; weight_z < weight->getZ(); weight_z+=activation->getZ()){
-					for(int weight_x=0; weight_x < weight->getX(); weight_x++){
-						for(int weight_y=0; weight_y < weight->getY(); weight_y++){
-							weight_grads->getArray(weight_z,weight_y)[weight_x] += output_grads->getArray(z_pos, y_pos)[x_pos] * activation->getArray(weight_z%activation->getZ(), y_pos+weight_y)[x_pos+weight_x];
-						}
+						activation_grads->getArray(grad_z, grad_y)[grad_x] *= mathematics::sigmoid_backward_derivated_once(activation->getArray(grad_z, grad_y)[grad_x]);
 					}
 				}
 			}
 		}
-	}
 
+		//weight_grads & bias_grads
+		#pragma omp for
+		for(int z_pos=0; z_pos < output->getZ(); z_pos++){
+
+			for(int y_pos=0; y_pos < output->getY(); y_pos++){
+				for(int x_pos=0; x_pos < output->getX(); x_pos++){
+
+					//Bias hinzufuegen
+					bias_grads->getArray()[z_pos] += output_grads->getArray(z_pos, y_pos)[x_pos];
+
+					//Weight hinzufuegen
+					for(int weight_z=z_pos; weight_z < weight->getZ(); weight_z+=activation->getZ()){
+						for(int weight_x=0; weight_x < weight->getX(); weight_x++){
+							for(int weight_y=0; weight_y < weight->getY(); weight_y++){
+								weight_grads->getArray(weight_z,weight_y)[weight_x] += output_grads->getArray(z_pos, y_pos)[x_pos] * activation->getArray(weight_z%activation->getZ(), y_pos+weight_y)[x_pos+weight_x];
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 	return true;
 }
 

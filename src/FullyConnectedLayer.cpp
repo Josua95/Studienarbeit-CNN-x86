@@ -61,31 +61,34 @@ bool FullyConnected_Layer::generate(Tensor *activation, Tensor *pre_grads){
  * function to forward to the FullyConnectedLayer
  */
 bool FullyConnected_Layer::forward(){
-
-	mathematics::set_tensor(output, 0);
-	//über jedes Element der Activations gehen
-	#pragma omp parallel for
-	for(int z_pos = 0; z_pos < activation->getZ(); z_pos++)
+	#pragma omp parallel
 	{
-		for(int y_pos = 0; y_pos < activation->getY(); y_pos++)
+		mathematics::set_tensor(output, 0);
+		//über jedes Element der Activations gehen
+		#pragma omp for
+		for(int z_pos = 0; z_pos < activation->getZ(); z_pos++)
 		{
-			for(int x_pos = 0; x_pos < activation->getX(); x_pos++)
+			for(int y_pos = 0; y_pos < activation->getY(); y_pos++)
 			{
-				//für jedes Element die verschiedenen Nodes rechnen
-				for(int node_index = 0; node_index < output->getX(); node_index++){
-					//std::cout << pre_tensor->getArray(z_pos,y_pos)[x_pos] << " " << weight->getArray(z_pos,y_pos)[x_pos+node_index*pre_tensor->getX()] << std::endl;
-					output->getArray(0,0)[node_index]+=activation->getArray(z_pos,y_pos)[x_pos]*weight->getArray(z_pos,y_pos)[x_pos+node_index*activation->getX()];
+				for(int x_pos = 0; x_pos < activation->getX(); x_pos++)
+				{
+					//für jedes Element die verschiedenen Nodes rechnen
+					for(int node_index = 0; node_index < output->getX(); node_index++){
+						//std::cout << pre_tensor->getArray(z_pos,y_pos)[x_pos] << " " << weight->getArray(z_pos,y_pos)[x_pos+node_index*pre_tensor->getX()] << std::endl;
+						output->getArray(0,0)[node_index]+=activation->getArray(z_pos,y_pos)[x_pos]*weight->getArray(z_pos,y_pos)[x_pos+node_index*activation->getX()];
+					}
 				}
 			}
 		}
-	}
-	for(int node_index = 0; node_index < output->getX(); node_index++){
-		//Teilen durch Anzahl der Activations pro Node
-		//output->getArray()[node_index] /= (activation->getX()*activation->getY()*activation->getZ());
-		//Bias hinzufuegen
-		output->getArray()[node_index] += bias->getArray()[node_index];
-		//Sigmoid anwenden
-		output->getArray()[node_index] = mathematics::sigmoid_once(output->getArray()[node_index]);
+		#pragma omp for
+		for(int node_index = 0; node_index < output->getX(); node_index++){
+			//Teilen durch Anzahl der Activations pro Node
+			//output->getArray()[node_index] /= (activation->getX()*activation->getY()*activation->getZ());
+			//Bias hinzufuegen
+			output->getArray()[node_index] += bias->getArray()[node_index];
+			//Sigmoid anwenden
+			output->getArray()[node_index] = mathematics::sigmoid_once(output->getArray()[node_index]);
+		}
 	}
 	return true;
 }
@@ -102,31 +105,34 @@ bool FullyConnected_Layer::backward(){
 	//pre_tensor[i]=weight[i+1]*node_deriv[i+1]*sigmoid_backward_derivated_once(node[i])
 
 	//jedes Element des pre_grads
-	#pragma omp parallel for
-	for(int z_pos = 0; z_pos < activation_grads->getZ(); z_pos++)
+	#pragma omp parallel
 	{
-		for(int y_pos = 0; y_pos < activation_grads->getY(); y_pos++)
+		#pragma omp for
+		for(int z_pos = 0; z_pos < activation_grads->getZ(); z_pos++)
 		{
-			for(int x_pos = 0; x_pos < activation_grads->getX(); x_pos++)
+			for(int y_pos = 0; y_pos < activation_grads->getY(); y_pos++)
 			{
-				float tmp=0;
-				//jede vorherige Node hat output->getX() Gewichte die Backprppagoiert werden sollen
-				for(int node_index = 0; node_index < output->getX(); node_index++){
-					//tmp = (w(l)*d(l))
-					tmp += weight->getArray(z_pos, y_pos)[x_pos+node_index*activation->getX()] * output_grads->getArray()[node_index];
-					//grads weight von diesem Layer
-					weight_grads->getArray(z_pos, y_pos)[x_pos+node_index*activation->getX()] += activation->getArray(z_pos, y_pos)[x_pos] * output_grads->getArray()[node_index];
-				}
+				for(int x_pos = 0; x_pos < activation_grads->getX(); x_pos++)
+				{
+					float tmp=0;
+					//jede vorherige Node hat output->getX() Gewichte die Backprppagoiert werden sollen
+					for(int node_index = 0; node_index < output->getX(); node_index++){
+						//tmp = (w(l)*d(l))
+						tmp += weight->getArray(z_pos, y_pos)[x_pos+node_index*activation->getX()] * output_grads->getArray()[node_index];
+						//grads weight von diesem Layer
+						weight_grads->getArray(z_pos, y_pos)[x_pos+node_index*activation->getX()] += activation->getArray(z_pos, y_pos)[x_pos] * output_grads->getArray()[node_index];
+					}
 
-				activation_grads->getArray(z_pos,y_pos)[x_pos] = tmp * mathematics::sigmoid_backward_derivated_once(activation->getArray(z_pos,y_pos)[x_pos]);
+					activation_grads->getArray(z_pos,y_pos)[x_pos] = tmp * mathematics::sigmoid_backward_derivated_once(activation->getArray(z_pos,y_pos)[x_pos]);
+				}
 			}
 		}
+		//grads bias von diesem Layer
+		#pragma omp for
+		for(int size=0; size < output->getSize(); size++){
+			bias_grads->getArray()[size] += output_grads->getArray()[size];
+		}
 	}
-	//grads bias von diesem Layer
-	for(int size=0; size < output->getSize(); size++){
-		bias_grads->getArray()[size] += output_grads->getArray()[size];
-	}
-
 	return true;
 }
 
