@@ -8,6 +8,7 @@
 #include "ConvLayer.hpp"
 #include "Mathematics.hpp"
 #include <iostream>
+#include <immintrin.h>
 
 /**
  * The constructor of a convolutional layer needs the specification of
@@ -71,7 +72,7 @@ bool Conv_Layer::forward(){
 	mathematics::set_tensor(output, 0.0);
 
 	//Alle Elemente des vorherigen Layers
-	#pragma omp parallel
+	/*#pragma omp parallel
 	{
 		#pragma omp for
 		for(int pre_z_pos=0; pre_z_pos < activation->getZ(); pre_z_pos++){
@@ -114,21 +115,48 @@ bool Conv_Layer::forward(){
 				}
 			}
 		}
+	}*/
+	__m256 mmx1;
+	__m256 mmx2;
+	__m256 mmxres;
+	#pragma omp parallel for private(mmx1, mmx2, mmxres)
+	for(int z_pos = 0; z_pos < output->getZ(); z_pos++ ){
+		for(int y_pos = 0; y_pos < output->getY(); y_pos++){
+			for(int x_pos = 0; x_pos < output->getX(); x_pos++){
+
+				int z_stop = (z_pos+1)*activation->getZ();
+
+				float array [8];
+
+				for(int w_z_pos = z_pos*activation->getZ(); w_z_pos < z_stop; w_z_pos++){
+
+					mmx1 =  _mm256_loadu_ps(weight->getArray(w_z_pos));
+					int mmx_index = 0;
+
+					for(int w_y_pos = 0; w_y_pos < weight->getY(); w_y_pos++){
+						for(int w_x_pos = 0; w_x_pos < weight->getX(); w_x_pos++){
+
+							array[mmx_index%8]=activation->getArray(w_z_pos%activation->getZ(), y_pos+w_y_pos)[x_pos+w_x_pos];
+							mmx_index++;
+							if(mmx_index%8 == 7 || mmx_index == weight->getSize()-1){
+								mmx2 = _mm256_loadu_ps(array);
+								mmxres = _mm256_mul_ps(mmx1, mmx2);
+								float *f = (float*)&mmxres;
+								for(int i=0; i < 8 && mmx_index+i < weight->getSize(); i++){
+									output->getArray(z_pos,y_pos)[x_pos] += f[i];
+								}
+								mmx1 =  _mm256_loadu_ps(weight->getArray(w_z_pos)+mmx_index);
+							}
+
+						}
+					}
+				}
+
+
+			}
+		}
 	}
 	return true;
-	/*for ( int filter = 0; filter < no_feature_maps; filter++ ){
-
-		for ( int x = 0; x < output->getX(); x++ ){
-			for ( int y = 0; y < output->getY(); y++ ){
-				float sum = 0;
-				for ( int i = 0; i < weight->getX(); i++ )
-					for ( int j = 0; j < weight->getY(); j++ )
-						for ( int z = 0; z < activation->getZ(); z++ )
-							sum += weight->getArray(filter*activation->getZ()+z, j)[i]*activation->getArray(z, y+i)[x+i];
-
-				output->getArray(filter, y)[x] = sum;
-			}
-		}*/
 }
 
 bool Conv_Layer::backward(){
