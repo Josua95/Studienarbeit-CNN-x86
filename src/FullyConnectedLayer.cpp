@@ -8,6 +8,10 @@
 #include "FullyConnectedLayer.hpp"
 #include "Mathematics.hpp"
 
+/**
+ * Constructor eines Fully Connected Layers
+ * size: Größe des Fully Connected Layers
+ */
 FullyConnected_Layer::FullyConnected_Layer(int size){
 	this->size=size;
 	activation=NULL;
@@ -30,10 +34,10 @@ FullyConnected_Layer::~FullyConnected_Layer() {
 }
 
 /**
- * function to generate a FullyConnectedLayer.
- * this function has to be called, before starting to forward in the Layer
- * <param> activation - output of the previous layer </param>
- * <param> pre_grads - grads of the previous layer </param>
+ * Funktion zum Erstellen eines Fully Conndected Layers
+ * Funktion muss aufgerufen werden, bevor der erste Durchgang des Netzes stattfindet
+ * activation: Zeiger auf Tensor mit den Activations des Layers
+ * pre_grads: Zeiger auf die Gradienten des vorherigen Layers
  */
 bool FullyConnected_Layer::generate(Tensor *activation, Tensor *pre_grads){
 	this->activation=activation;
@@ -58,7 +62,7 @@ bool FullyConnected_Layer::generate(Tensor *activation, Tensor *pre_grads){
 }
 
 /**
- * function to forward to the FullyConnectedLayer
+ * Funktion zum Ausrechnen der Outputs aus den Activations
  */
 bool FullyConnected_Layer::forward(){
 	#pragma omp parallel
@@ -87,19 +91,17 @@ bool FullyConnected_Layer::forward(){
 			//Bias hinzufuegen
 			output->getArray()[node_index] += bias->getArray()[node_index];
 			//Sigmoid anwenden
-			output->getArray()[node_index] = mathematics::sigmoid_once(output->getArray()[node_index]);
+			output->getArray()[node_index] = mathematics::sigmoid_forward(output->getArray()[node_index]);
 		}
 	}
 	return true;
 }
 
 /**
- * function to backpropagate in the FullyConnectedLayer
+ * Funktion zum Ausrechnen der Gradienten des vorherigen Layers aus den Gradienten des Layers dahinter
  *
- * calculates pre_grads, gradients of the layer beyond
- * also calculates bias_grads & weight_grads of this Layer
+ * Berechnet pre_grads, bias_grads und weight_grads
  *
- * grads of this Layer have to be correct in order for this function to work
  */
 bool FullyConnected_Layer::backward(){
 	//pre_tensor[i]=weight[i+1]*node_deriv[i+1]*sigmoid_backward_derivated_once(node[i])
@@ -123,7 +125,7 @@ bool FullyConnected_Layer::backward(){
 						weight_grads->getArray(z_pos, y_pos)[x_pos+node_index*activation->getX()] += activation->getArray(z_pos, y_pos)[x_pos] * output_grads->getArray()[node_index];
 					}
 
-					activation_grads->getArray(z_pos,y_pos)[x_pos] = tmp * mathematics::sigmoid_backward_derivated_once(activation->getArray(z_pos,y_pos)[x_pos]);
+					activation_grads->getArray(z_pos,y_pos)[x_pos] = tmp * mathematics::sigmoid_backward(activation->getArray(z_pos,y_pos)[x_pos]);
 				}
 			}
 		}
@@ -136,10 +138,11 @@ bool FullyConnected_Layer::backward(){
 	return true;
 }
 
-/*function to fix values of weight and bias in this Layer
+/**Funktion zum Anpassen der Gewichte und der Biases
+ * weight_grads und bias_grads werden zurück gesetzt
  *
- * <param> batch_size - </param>
- * <param> training_rate - </param>
+ * batch_size: Größe der Batch, mit der die bias_grads und weight_grads berechnet wurden
+ * training_rate: Trainingsrate mit der trainiert werden soll
  */
 bool FullyConnected_Layer::fix(int batch_size, float training_rate){
 	#pragma omp parallel for

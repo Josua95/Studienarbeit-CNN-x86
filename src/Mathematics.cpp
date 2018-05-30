@@ -8,39 +8,36 @@
 #include "Mathematics.hpp"
 
 #include "math.h"
+#include <stdlib.h>
 #include <iostream>
 
 namespace mathematics {
 
-
-float sigmoid_once(float in)
+/**
+ * Berechnet die Sigmoid-Funktion aus dem Input
+ * in: Input der zur Berechnung der Sigmoid-Funktion verwendet werden soll
+ */
+float sigmoid_forward(float in)
 {
 	double temp = exp(-in);
 	return (float)(1 / (1+temp));
 }
 
-float sigmoid_backward_derivated_once(float activation)
+/**
+ * Berechnet die inversen Sigmoid-Funktion aus dem Input
+ * in: Input der zur Berechnung der inversern Sigmoid-Funktion verwendet werden soll
+ */
+float sigmoid_backward(float activation)
 {
 	return activation * (1 - activation);
 }
 
-void sigmoid(float *in, float *out, int size)
-{
-	for(; size>0; size--, in++, out++)
-	{
-		*out = sigmoid_once(*in);
-	}
-}
-
-void sigmoid_backward_derivated(float *activation, float *derivatives, int size)
-{
-	for(; size>0; size--, activation++, derivatives++)
-	{
-		*derivatives = sigmoid_backward_derivated_once(*activation);
-	}
-}
-
-
+/**
+ * Berechnung der Softmax-Werte aus dem Array an Inputs
+ * in: Zeiger auf Float-Array mit den Inputs
+ * out: Zeiger auf die Adresse, an der die Outputs geschrieben werden sollen
+ * size: Länder des Arrays Inputs
+ */
 void softmax(float *in, float *out, int size)
 {
 	double sum=0;
@@ -54,38 +51,13 @@ void softmax(float *in, float *out, int size)
 	}
 }
 
-
-float cross_entropy(float *calculated, float *expected, int size)
-{
-	double sum=0;
-	for(; size>0; size--, expected++, calculated++)
-	{
-		sum += - (*expected) * log(*calculated);
-	}
-	return (float)sum;
-}
-
-float get_cost(float *output, float *labels, int size)
-{
-	float *normalized;
-	float ret;
-	normalized = new float[size];
-	softmax(output, normalized, size);
-	ret = cross_entropy(normalized, labels, size);
-	delete[] normalized;
-	return ret;
-}
-
-void get_cost_derivatives(float *output, float *labels, float *derivatives, int size)
-{
-	for(; size>0; size--, output++, labels++, derivatives++)
-	{
-		*derivatives = *output - *labels;
-	}
-}
-
+/**
+ * Setzt einen ganzen Tensor auf einen Wert
+ * tensor: Zeiger auf Tensor
+ * value: Wert, der jedes Element des Tensors bekommen soll
+ */
 void set_tensor(Tensor *tensor, float value){
-	#pragma omp for
+	#pragma omp parallel for
 	for(int z_pos=0; z_pos < tensor->getZ(); z_pos++){
 		for(int y_pos = 0; y_pos < tensor->getY(); y_pos++){
 			for(int x_pos = 0; x_pos < tensor->getX();x_pos++){
@@ -95,8 +67,12 @@ void set_tensor(Tensor *tensor, float value){
 	}
 }
 
+/**
+ * Setzt einen ganzen Tensor auf einen zufälligen Wert
+ * tensor: Zeiger auf Tensor
+ */
 void set_tensor_random(Tensor *tensor){
-	#pragma omp for
+	#pragma omp parallel for
 	for(int z_pos=0; z_pos < tensor->getZ(); z_pos++){
 		for(int y_pos = 0; y_pos < tensor->getY(); y_pos++){
 			for(int x_pos = 0; x_pos < tensor->getX();x_pos++){
@@ -108,6 +84,10 @@ void set_tensor_random(Tensor *tensor){
 	}
 }
 
+/**
+ * Ausgabe eines Tensors in der Konsole
+ * tensor: Zeiger auf Tensor
+ */
 void printTensor(Tensor *tensor){
 	for(int z_pos=0; z_pos<tensor->getZ(); z_pos++){
 		for(int y_pos=0; y_pos<tensor->getY(); y_pos++){

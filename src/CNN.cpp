@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
+#include <time.h>
 #include "ConvLayer.hpp"
 #include "MaxPoolingLayer.hpp"
 #include "FullyConnectedLayer.hpp"
@@ -106,40 +107,32 @@ int main(int argc, char **argv) {
 				std::cout << picture->get_output()[i] << " ";
 			}
 			std::cout << std::endl;*/
-
+			double fstart = clock();
 			for(unsigned int layer_index=0;layer_index < layers->size(); layer_index++){
 				switch(layer_index){
 				case 0:
 					layers->at(layer_index)->conv_layer->forward();
-					//mathematics::printTensor(layers->at(layer_index)->conv_layer->output);
-					//mathematics::printTensor(layers->at(layer_index)->conv_layer->weight);
 					break;
 				case 1:
 					layers->at(layer_index)->max_pooling_layer->forward();
-					//mathematics::printTensor(layers->at(layer_index)->max_pooling_layer->output);
 					break;
 				case 2:
 					layers->at(layer_index)->conv_layer->forward();
 					//mathematics::printTensor(layers->at(layer_index)->conv_layer->output);
-					//mathematics::printTensor(layers->at(layer_index)->conv_layer->weight);
 					break;
 				case 3:
 					layers->at(layer_index)->max_pooling_layer->forward();
-					//mathematics::printTensor(layers->at(layer_index)->max_pooling_layer->output);
 					break;
 				case 4:
 					layers->at(layer_index)->fully_connected_layer->forward();
-					//mathematics::printTensor(layers->at(layer_index)->fully_connected_layer->weight);
-					//mathematics::printTensor(layers->at(layer_index)->fully_connected_layer->output);
 					break;
 				case 5:
 					layers->at(layer_index)->fully_connected_layer->forward();
-					//mathematics::printTensor(layers->at(layer_index)->fully_connected_layer->weight);
-					//mathematics::printTensor(layers->at(layer_index)->fully_connected_layer->output);
 					break;
 				default: break;
 				}
 			}
+			std::cout << "Time Forward:" << clock()-fstart << std::endl;
 			float soft_output[10];
 			mathematics::softmax(layers->back()->fully_connected_layer->output->getArray(), soft_output, 10);
 			/*for(int i=0; i<10; i++){
@@ -150,30 +143,27 @@ int main(int argc, char **argv) {
 				if(picture->get_output()[i] == 1.0f){
 					layers->back()->fully_connected_layer->output_grads->getArray()[i] = layers->back()->fully_connected_layer->output->getArray()[i] -1.0f;
 					cost += pow( 1.0 - layers->back()->fully_connected_layer->output->getArray()[i], 2);
-					layers->back()->fully_connected_layer->output_grads->getArray()[i] *= mathematics::sigmoid_backward_derivated_once(layers->back()->fully_connected_layer->output->getArray()[i]);
+					layers->back()->fully_connected_layer->output_grads->getArray()[i] *= mathematics::sigmoid_backward(layers->back()->fully_connected_layer->output->getArray()[i]);
 					//std::cout << 1.0f - layers->at(4)->fully_connected_layer->output->getArray()[i] << " ";
 				}
 				else{
 					layers->back()->fully_connected_layer->output_grads->getArray()[i] = layers->back()->fully_connected_layer->output->getArray()[i];
 					cost += pow( layers->back()->fully_connected_layer->output->getArray()[i] , 2);
-					layers->back()->fully_connected_layer->output_grads->getArray()[i] *= mathematics::sigmoid_backward_derivated_once(layers->back()->fully_connected_layer->output->getArray()[i]);
+					layers->back()->fully_connected_layer->output_grads->getArray()[i] *= mathematics::sigmoid_backward(layers->back()->fully_connected_layer->output->getArray()[i]);
 					//std::cout << -layers->at(4)->fully_connected_layer->output->getArray()[i] << " ";
 				}
 			}
 			//std::cout << std::endl;
 
 
-
+			double bstart = clock();
 			for(int layer_index=layers->size()-1;layer_index >= 0; layer_index--){
 				switch(layer_index){
 				case 0:
 					layers->at(layer_index)->conv_layer->backward();
-					//mathematics::printTensor(layers->at(layer_index)->conv_layer->node);
-					//mathematics::printTensor(layers->at(layer_index)->conv_layer->weight);
 					break;
 				case 1:
 					layers->at(layer_index)->max_pooling_layer->backward();
-					//mathematics::printTensor(layers->at(layer_index)->max_pooling_layer->node);
 					break;
 				case 2:
 					layers->at(layer_index)->conv_layer->backward();
@@ -190,6 +180,7 @@ int main(int argc, char **argv) {
 				default: break;
 				}
 			}
+			std::cout << "Time Backward:" << clock()-bstart << std::endl;
 
 			float *output=layers->back()->fully_connected_layer->output->getArray();
 			//std::cout << "Forward " << i << " " << output[0] << " " << output[1] << " " << output[2] << " " << output[3] << " " << output[4] << " " << output[5] << " " << output[6] << " " << output[7] << " " << output[8] << " " << output[9] << std::endl;
@@ -219,25 +210,21 @@ int main(int argc, char **argv) {
 				for(unsigned int layer_index=0;layer_index < layers->size(); layer_index++){
 					switch(layer_index){
 					case 0:
-						//mathematics::printTensor(layers->at(layer_index)->conv_layer->weight_grads);
 						layers->at(layer_index)->conv_layer->fix(BATCH_SIZE, TRAINING_RATE);
 						break;
 					case 1:
-						//MaxPoolingLayer
+						//MaxPoolingLayer --> keine Gewichte und Biases
 						break;
 					case 2:
-						//mathematics::printTensor(layers->at(layer_index)->conv_layer->weight_grads);
 						layers->at(layer_index)->conv_layer->fix(BATCH_SIZE, TRAINING_RATE);
 						break;
 					case 3:
-						//MaxPoolingLayer
+						//MaxPoolingLayer --> keine Gewichte und Biases
 						break;
 					case 4:
-						//mathematics::printTensor(layers->at(layer_index)->fully_connected_layer->weight_grads);
 						layers->at(layer_index)->fully_connected_layer->fix(BATCH_SIZE, TRAINING_RATE);
 						break;
 					case 5:
-						//mathematics::printTensor(layers->at(layer_index)->fully_connected_layer->weight_grads);
 						layers->at(layer_index)->fully_connected_layer->fix(BATCH_SIZE, TRAINING_RATE);
 						break;
 					default: break;

@@ -14,9 +14,9 @@
  * The constructor of a convolutional layer needs the specification of
  * the local receptive fields and the step size to generate an output
  *
- * <param> int x_receptive - size of receptive field in x-direction </param>
- * <param> int y_receptive - size of receptive field in y-direction </param>
- * <param> int step_size - step size to move receptive field </param>
+ * x_receptive: size of receptive field in x-direction
+ * y_receptive: size of receptive field in y-direction
+ * step_size: step size to move receptive field
  */
 Conv_Layer::Conv_Layer(int x_receptive, int y_receptive, int step_size, int no_feature_maps){
 	this->step_size = step_size;
@@ -36,6 +36,12 @@ Conv_Layer::Conv_Layer(int x_receptive, int y_receptive, int step_size, int no_f
 Conv_Layer::~Conv_Layer() {
 }
 
+/**
+ * Funktion zum Erstellen eines Convolutional Layers
+ * Funktion muss aufgerufen werden, bevor der erste Durchgang des Netzes stattfindet
+ * activation: Zeiger auf Tensor mit den Activations des Layers
+ * pre_grads: Zeiger auf die Gradienten des vorherigen Layers
+ */
 bool Conv_Layer::generate(Tensor *activation, Tensor *pre_grads){
 
 	int x_size = (activation->getX() - x_receptive + 1) / step_size;
@@ -67,11 +73,18 @@ bool Conv_Layer::generate(Tensor *activation, Tensor *pre_grads){
 	return true;
 }
 
+/**
+ * Funktion zum Ausrechnen der Outputs aus den Activations
+ *
+ * verschiedene Implementierungen auskommentiert
+ */
 bool Conv_Layer::forward(){
 	//Alle Nodes auf 0 setzen
 	mathematics::set_tensor(output, 0.0);
 
-	//Alle Elemente des vorherigen Layers
+	/**
+	 * Implementierung durch Durchgehen der Activation
+	 */
 	/*#pragma omp parallel
 	{
 		#pragma omp for
@@ -116,7 +129,10 @@ bool Conv_Layer::forward(){
 			}
 		}
 	}*/
-	__m256 mmx1;
+	/**
+	 * Implementierung mit AVX
+	 */
+	/*__m256 mmx1;
 	__m256 mmx2;
 	__m256 mmxres;
 	#pragma omp parallel for private(mmx1, mmx2, mmxres)
@@ -155,10 +171,33 @@ bool Conv_Layer::forward(){
 
 			}
 		}
+	}*/
+	#pragma omp parallel for
+	for ( int z_pos =0; z_pos < output->getZ() ; z_pos++){
+		for ( int y_pos = 0 ; y_pos < output->getY() ; y_pos++){
+			for ( int x_pos = 0 ; x_pos < output->getX() ; x_pos++){
+
+				int z_stop = (z_pos+1)*activation->getZ();
+				for ( int w_z_pos=z_pos*activation->getZ() ; w_z_pos < z_stop; w_z_pos++){
+					for ( int w_y_pos = 0; w_y_pos < weight->getY (); w_y_pos++){
+						for ( int w_x_pos = 0 ; w_x_pos < weight->getX(); w_x_pos++){
+							output->getArray(z_pos, y_pos)[x_pos] += activation->getArray(z_pos%activation->getZ(), y_pos+w_y_pos)[x_pos+w_x_pos] * weight->getArray(w_z_pos, w_y_pos )[w_x_pos] ;
+						}
+					}
+				}
+
+			}
+		}
 	}
 	return true;
 }
 
+/**
+ * Funktion zum Ausrechnen der Gradienten des vorherigen Layers aus den Gradienten des Layers dahinter
+ *
+ * Berechnet pre_grads, bias_grads und weight_grads
+ *
+ */
 bool Conv_Layer::backward(){
 
 	mathematics::set_tensor(activation_grads, 0.0);
@@ -189,7 +228,7 @@ bool Conv_Layer::backward(){
 								activation_grads->getArray(grad_z, grad_y)[grad_x]  += output_grads->getArray(z_pos/activation->getZ(), grad_y-y_rec)[grad_x-x_rec] * weight->getArray(z_pos, y_rec)[x_rec];
 							}
 						}
-						activation_grads->getArray(grad_z, grad_y)[grad_x] *= mathematics::sigmoid_backward_derivated_once(activation->getArray(grad_z, grad_y)[grad_x]);
+						activation_grads->getArray(grad_z, grad_y)[grad_x] *= mathematics::sigmoid_backward(activation->getArray(grad_z, grad_y)[grad_x]);
 					}
 				}
 			}
@@ -220,6 +259,12 @@ bool Conv_Layer::backward(){
 	return true;
 }
 
+/**Funktion zum Anpassen der Gewichte und der Biases
+ * weight_grads und bias_grads werden zurück gesetzt
+ *
+ * batch_size: Größe der Batch, mit der die bias_grads und weight_grads berechnet wurden
+ * training_rate: Trainingsrate mit der trainiert werden soll
+ */
 bool Conv_Layer::fix(int batch_size, float training_rate){
 	#pragma omp parallel for
 	for(int feature_map=0; feature_map<no_feature_maps; feature_map++){

@@ -8,7 +8,7 @@
 #ifndef TENSOR_HPP_
 #define TENSOR_HPP_
 
-struct Tensor{
+class Tensor{
 private:
 	float *array;
 	int x;

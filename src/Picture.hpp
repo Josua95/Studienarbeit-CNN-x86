@@ -2,7 +2,7 @@
  * Picture.h
  *
  *  Created on: 03.12.2017
- *      Author: Florian
+ *      Author: Florian Schmidt, Josua Benz
  */
 
 #ifndef PICTURE_HPP_

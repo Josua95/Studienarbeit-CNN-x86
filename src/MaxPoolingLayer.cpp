@@ -11,6 +11,11 @@
 #include <iostream>
 #include <limits>
 
+/**
+ * Constructor
+ * x_receptive: Größe der Pooling-Rechtecke in x-Richtung
+ * y_receptive: Größe der Pooling-Rechtecke in y-Richtung
+ */
 MaxPooling_Layer::MaxPooling_Layer(int x_receptive, int y_receptive){
 	this->x_receptive = x_receptive;
 	this->y_receptive = y_receptive;
@@ -26,6 +31,12 @@ MaxPooling_Layer::~MaxPooling_Layer() {
 	delete output_grads;
 }
 
+/**
+ * Funktion zum Erstellen eines Max Pooling Layers
+ * Funktion muss aufgerufen werden, bevor der erste Durchgang des Netzes stattfindet
+ * activation: Zeiger auf Tensor mit den Activations des Layers
+ * pre_grads: Zeiger auf die Gradienten des vorherigen Layers
+ */
 bool MaxPooling_Layer::generate(Tensor *activation, Tensor *pre_grads){
 	this->activation = activation;
 	this->activation_grads = pre_grads;
@@ -36,6 +47,10 @@ bool MaxPooling_Layer::generate(Tensor *activation, Tensor *pre_grads){
 	output_grads = new Tensor(x_size, y_size, activation->getZ());
 	return true;
 }
+
+/**
+ * Funktion zum Ausrechnen der Outputs aus den Activations
+ */
 bool MaxPooling_Layer::forward(){
 
 	//Alle Feature-Maps durchgehen
@@ -63,6 +78,10 @@ bool MaxPooling_Layer::forward(){
 	}
 	return true;
 }
+
+/**
+ * Funktion zum Ausrechnen der Gradienten des vorherigen Layers aus den gradienten des Layers dahinter
+ */
 bool MaxPooling_Layer::backward(){
 
 	//Ueber alle Feature Maps des vorherigen Layers gehen

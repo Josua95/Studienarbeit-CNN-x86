@@ -2,7 +2,7 @@
  * PictureContainer.cpp
  *
  *  Created on: 03.12.2017
- *      Author: Florian
+ *      Author: Florian Schmidt, Josua Benz
  */
 
 #include "PictureContainer.hpp"
@@ -10,7 +10,11 @@
 #include <fstream>
 
 
-
+/**
+ * Constructor für den PictureContainer
+ * foldername: Pfad zum Ordner mit den Bildern
+ * num_fo_files: Anzahl der .csv-Dateien mit Bildern im Ordner
+ */
 PictureContainer::PictureContainer(std::string foldername, int num_of_files)
 {
 	this->next_index = -1;
@@ -24,6 +28,9 @@ PictureContainer::~PictureContainer() {
 
 }
 
+/**
+ * Laden der Bilder aus .csv-Dateien innerhalb des Ordners
+ */
 void PictureContainer::load_pictures() {
 	std::string csv_file = this->foldername + "/" + std::to_string(this->file_index) + ".csv";
 	std::ifstream infile(csv_file);
@@ -35,6 +42,10 @@ void PictureContainer::load_pictures() {
 	}
 }
 
+/**
+ * nächstes Bild wird geladen
+ * falls Ende einer Datei erreicht, wird erstes Bild aus nächstes Datei genommen
+ */
 Picture * PictureContainer::get_nextpicture(void)
 {
 	next_index++;

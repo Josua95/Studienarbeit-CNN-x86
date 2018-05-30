@@ -12,8 +12,8 @@
 
 namespace mathematics {
 
-float sigmoid_once(float in);
-float sigmoid_backward_derivated_once(float activation);
+float sigmoid_forward(float in);
+float sigmoid_backward(float activation);
 
 void sigmoid(float *in, float *out, int size);
 void sigmoid_backward_derivated(float *activation, float *derivatives, int size);

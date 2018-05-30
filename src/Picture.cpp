@@ -20,6 +20,10 @@ Picture::Picture()
 
 }
 
+/**
+ * Constructor
+ * line: String mit den Werten eines Bildes in .csv-Format
+ */
 Picture::Picture(std::string *line)
 {
 	std::stringstream          lineStream(*line);
@@ -39,11 +43,17 @@ Picture::Picture(std::string *line)
 
 Picture::~Picture() { }
 
+/**
+ * return: Zeiger auf die Elemente des Bildes
+ */
 float *Picture::get_input(void)
 {
 	return this->input_data;
 }
 
+/**
+ * return: Zeiger auf die richtige Klassifizierung der Bilder
+ */
 float *Picture::get_output(void)
 {
 	return this->output_data;
