@@ -13,10 +13,14 @@
 #include "PictureContainer.hpp"
 #include "Mathematics.hpp"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #define TRAINING_RATE 0.01
-#define BATCH_SIZE 10
-#define EPOCH 100
-#define ITERATIONS 100000
+#define BATCH_SIZE 1
+#define EPOCH 10
+#define ITERATIONS 1000
 
 union Layer{
 	Conv_Layer *conv_layer;
